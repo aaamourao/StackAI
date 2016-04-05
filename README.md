@@ -15,5 +15,5 @@ First, a proof of concept will be implemented using open machine learning librar
 ## Coders
 
 * Adriano Mourao - mourao.aaa@gmail.com
-* Juliana
-* Vinícius Garcia
+* Juliana Nunes
+* Vinícius Garcia - vingarcia00@gmail.com
