@@ -3,3 +3,4 @@ stackexchange/
 venv/
 *.swp
 database.cnf
+*.sql
