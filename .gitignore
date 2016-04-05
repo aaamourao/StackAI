@@ -2,3 +2,4 @@
 stackexchange/
 venv/
 *.swp
+database.cnf
