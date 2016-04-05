@@ -8,9 +8,21 @@
 * Predict when a question is going to be answered
 * Predict if a post is going to be blocked or removed
 
-## Project road map
+## Project status and road map
 
 First, a proof of concept will be implemented using open machine learning libraries, just like TensorFlow and Numpy. After that, a Python API will be developed for the awesome [Gneural Network](https://www.gnu.org/software/gneuralnetwork/), which is currently on its early versions.
+
+### Currently version 0.0.1
+* Django apps created
+* Models for data handling
+
+## Installation
+
+Hey, we have a [wiki](https://github.com/aaamourao/StackAI/wiki)!!!
+
+## Contribute
+
+The project is on alpha stage. There are a project road map and devel instructions on our [wiki](https://github.com/aaamourao/StackAI/wiki)
 
 ## Coders
 
