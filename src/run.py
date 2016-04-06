@@ -64,6 +64,12 @@ def main(args=defaultFolder):
                 # huge_tree=True is a workaround for the bug #1285592 on lxml library
                 parser = XMLParser(huge_tree=True)
                 table = objectify.fromstring(xml, parser=parser)
+                ### dev area
+                for elem in table.getchildren():
+                    print elem.attrib
+                # dev break!!!!!
+                break
+            # dev break!!!!!
             break
     shutil.rmtree(tmpFolder)
 
