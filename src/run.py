@@ -31,28 +31,41 @@ import os
 import sys
 import pyunpack
 import shutil
+from lxml import objectify
+from lxml.etree import XMLParser
 
 defaultFolder = "../stackexchange/" 
-dataPattern = '*.7z'
-tempFolder = "./tmp"
+dataPattern = '.7z'
+tmpFolder = "./tmp"
 
 def main(args=defaultFolder):
     # TODO: Handle user inputs and load it on data structures
     folder = defaultFolder
 
     # create temporary dir for descompressing data
-    if os.path.exists(tempFolder):
+    if os.path.exists(tmpFolder):
         print 'Warning: removing existent folder ' + tmpFolder
         shutil.rmtree(tmpFolder)
-    os.makedirs(tempFolder)
+    os.makedirs(tmpFolder)
 
     print 'Generating .tz files list from ' + defaultFolder
     for root,_,files in os.walk(folder):
-        gen = (data for data in files if data.endswith(".7z"))
-        for data in gen:
-            dataPath = os.path.join(root, data)
-            pyunpack.Archive(dataPath).extractall(tempFolder)
-    shutil.rmtree(tempFolder)
+        gen7z = (file7z for file7z in files if file7z.endswith(dataPattern))
+        for file7z in gen7z:
+            dataPath = os.path.join(root, file7z)
+            pyunpack.Archive(dataPath).extractall(tmpFolder)
+            genXML = (fileXML for fileXML in os.listdir(tmpFolder))
+            for fileXML in genXML:
+                print 'Loading data from ' + fileXML + ' extracted from ' + root + file7z
+
+                with open(os.path.join(tmpFolder, fileXML)) as f:
+                    xml = f.read()
+
+                # huge_tree=True is a workaround for the bug #1285592 on lxml library
+                parser = XMLParser(huge_tree=True)
+                table = objectify.fromstring(xml, parser=parser)
+            break
+    shutil.rmtree(tmpFolder)
 
 if __name__ == '__main__':
     main(sys.argv)
