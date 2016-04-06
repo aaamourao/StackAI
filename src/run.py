@@ -29,16 +29,30 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 import sys
+import pyunpack
+import shutil
 
-compDataPattern = '*.7z'
-compDataFolder = r"meta.opensource.stackexchange.com.7z"
+defaultFolder = "../stackexchange/" 
+dataPattern = '*.7z'
+tempFolder = "./tmp"
 
-def main(args):
+def main(args=defaultFolder):
     # TODO: Handle user inputs and load it on data structures
-    for root,dirs,files in os.walk(compDataFolder):
-        print root
-        print dirs
-        print files
+    folder = defaultFolder
+
+    # create temporary dir for descompressing data
+    if os.path.exists(tempFolder):
+        print 'Warning: removing existent folder ' + tmpFolder
+        shutil.rmtree(tmpFolder)
+    os.makedirs(tempFolder)
+
+    print 'Generating .tz files list from ' + defaultFolder
+    for root,_,files in os.walk(folder):
+        gen = (data for data in files if data.endswith(".7z"))
+        for data in gen:
+            dataPath = os.path.join(root, data)
+            pyunpack.Archive(dataPath).extractall(tempFolder)
+    shutil.rmtree(tempFolder)
 
 if __name__ == '__main__':
     main(sys.argv)
