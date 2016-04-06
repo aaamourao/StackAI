@@ -5,3 +5,4 @@ venv/
 database.cnf
 *.sql
 *.7z
+*.swo
