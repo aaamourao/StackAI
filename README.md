@@ -12,7 +12,7 @@
 
 First, a proof of concept will be implemented using open machine learning libraries, just like TensorFlow and Numpy. After that, a Python API will be developed for the awesome [Gneural Network](https://www.gnu.org/software/gneuralnetwork/), which is currently on its early versions.
 
-#### Currently version 0.0.1
+#### Current version 0.0.1
 * Django apps created
 * Models for data handling
 
