@@ -6,3 +6,5 @@ database.cnf
 *.sql
 *.7z
 *.swo
+*.xml
+src/tmp/
