@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #
 # run.py -- This belongs to StackAI
+# Execute data uncompress, trainnings and validation over StackExchange data
 # 
 # StackAI project intends to use machine learning approaches to find out
 # patterns and make predictions on StackExchange dumped data.
@@ -26,3 +27,18 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import os
+import sys
+
+compDataPattern = '*.7z'
+compDataFolder = r"meta.opensource.stackexchange.com.7z"
+
+def main(args):
+    # TODO: Handle user inputs and load it on data structures
+    for root,dirs,files in os.walk(compDataFolder):
+        print root
+        print dirs
+        print files
+
+if __name__ == '__main__':
+    main(sys.argv)
