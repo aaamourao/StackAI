@@ -8,24 +8,24 @@
 * Predict when a question is going to be answered
 * Predict if a post is going to be blocked or removed
 
-## Project status and road map
+#### Current status
 
 First, a proof of concept will be implemented using open machine learning libraries, just like TensorFlow and Numpy. After that, a Python API will be developed for the awesome [Gneural Network](https://www.gnu.org/software/gneuralnetwork/), which is currently on its early versions.
 
-### Currently version 0.0.1
+#### Currently version 0.0.1
 * Django apps created
 * Models for data handling
 
-## Installation
+#### Installation
 
-Hey, we have a [wiki](https://github.com/aaamourao/StackAI/wiki)!!!
+Hey, we have a [wiki](https://github.com/aaamourao/StackAI/wiki)!!! There are instructions for common users and developers.
 
-## Contribute
+#### Contribute
 
 The project is on alpha stage. There are a project road map and devel instructions on our [wiki](https://github.com/aaamourao/StackAI/wiki)
 
-## Coders
+#### Coders
 
-* Adriano Mourao - mourao.aaa@gmail.com
+* Adriano Mourao - @aaamourao - mourao.aaa@gmail.com
 * Juliana Nunes - juliananunescomp@gmail.com
-* Vinícius Garcia - vingarcia00@gmail.com
+* Vinícius Garcia - @vingarcia - vingarcia00@gmail.com
