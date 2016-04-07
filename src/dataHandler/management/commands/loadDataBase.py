@@ -33,41 +33,54 @@ from lxml import objectify
 from lxml.etree import XMLParser
 from django.core.management.base import BaseCommand, CommandError
 from dataHandler.models import *
+from progressbar import ProgressBar
 
 defaultFolder = "../stackexchange/" 
 dataPattern = '.7z'
 tmpFolder = "./tmp"
 
 def insertVote(table):
-    for elem in table.getchildren():
-        # create rows on foreignkey tables, if necessary
-        try:
-            newPost = Post.objects.get(id=elem.attrib['PostId'])
-        except Post.DoesNotExist:
-            newPost = Post(id=elem.attrib['PostId'])
-            newPost.save()
+    elemList = table.getchildren()
+    # progress bar initial setup
+    with ProgressBar(max_value=len(elemList)) as progress:
+        progUpdt = 0
 
-        newVote = Vote( 
-                id = elem.attrib['Id'],
-                postId = newPost,
-                voteTypeId = elem.attrib['VoteTypeId'],
-                creationDate = elem.attrib['CreationDate'],
-        )
-        # optional attributes
-        if elem.attrib.has_key('UserId'):
-            # create rows on foreignkey tables, if necessary
-            try:
-                newUser = User.objects.get(id=elem.attrib['UserId'])
-            except User.DoesNotExist:
-                newUser = User(id=elem.attrib['UserId'])
-                newUser.save()
-            newVote.userId = newUser
+        origStderr = sys.stderr
+        with open(table.tag + '.log', 'w+') as logFile:
+            # change stderr to log file
+            sys.stderr = logFile
+            for elem in elemList:
+                # create rows on foreignkey tables, if necessary
+                try:
+                    newPost = Post.objects.get(id=elem.attrib['PostId'])
+                except Post.DoesNotExist:
+                    newPost = Post(id=elem.attrib['PostId'])
+                    newPost.save()
 
-        if elem.attrib.has_key('BountyAmount'):
-            newVote.bountyAmount = elem.attrib['BountyAmount']
-            
-        newVote.save()
-        print 'Vote saved. Id = ' + newVote.id
+                newVote = Vote( 
+                        id = elem.attrib['Id'],
+                        postId = newPost,
+                        voteTypeId = elem.attrib['VoteTypeId'],
+                        creationDate = elem.attrib['CreationDate'],
+                )
+                # optional attributes
+                if elem.attrib.has_key('UserId'):
+                    # create rows on foreignkey tables, if necessary
+                    try:
+                        newUser = User.objects.get(id=elem.attrib['UserId'])
+                    except User.DoesNotExist:
+                        newUser = User(id=elem.attrib['UserId'])
+                        newUser.save()
+                    newVote.userId = newUser
+
+                if elem.attrib.has_key('BountyAmount'):
+                    newVote.bountyAmount = elem.attrib['BountyAmount']
+                    
+                newVote.save()
+                # update and increment progress
+                progress.update(progUpdt)
+                progUpdt += 1
+            sys.stderr = origStderr
 
 def insertBadge(table):
     print 'NaN'
@@ -99,18 +112,18 @@ class Command(BaseCommand):
                 genXML = (fileXML for fileXML in os.listdir(tmpFolder))
                 for fileXML in genXML:
                     print 'Loading data from ' + fileXML + ' extracted from ' + root + file7z
-
                     with open(os.path.join(tmpFolder, fileXML)) as f:
                         xml = f.read()
 
                     # huge_tree=True is a workaround for the bug #1285592 on lxml library
                     parser = XMLParser(huge_tree=True)
                     table = objectify.fromstring(xml, parser=parser)
+                    ###devared2a###
+                    if table.tag == 'votes':
+                    ###enddev###
 
-                    print 'Inserting ' + table.tag + ' from ' + tmpFolder + '/' + fileXML
-                    insertRow[table.tag](table)
-                    # dev break!!!!!
-                    break
-                # dev break!!!!!
-                break
+                        print 'Inserting ' + table.tag + ' from ' + tmpFolder + '/' + fileXML
+                        insertRow[table.tag](table)
+                        # dev break!!!!!
+                        break
         shutil.rmtree(tmpFolder)
