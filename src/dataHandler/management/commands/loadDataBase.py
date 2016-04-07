@@ -1,7 +1,5 @@
-#!/usr/bin/env python
-#
-# run.py -- This belongs to StackAI
-# Execute data uncompress, trainnings and validation over StackExchange data
+# loadDataBase.py -- This belongs to StackAI
+# Discompress data from StackExchange and load it into django database
 # 
 # StackAI project intends to use machine learning approaches to find out
 # patterns and make predictions on StackExchange dumped data.
@@ -34,7 +32,6 @@ import shutil
 from lxml import objectify
 from lxml.etree import XMLParser
 from django.core.management.base import BaseCommand, CommandError
-from django.utils import translation
 from dataHandler.models import *
 
 defaultFolder = "../stackexchange/" 
