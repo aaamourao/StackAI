@@ -42,14 +42,14 @@ tmpFolder = "./tmp"
 def insertVote(elem):
     # create rows on foreignkey tables, if necessary
     try:
-        newPost = Post.objects.get(id=elem.attrib['PostId'])
+        relatedPost = Post.objects.get(id=elem.attrib['PostId'])
     except Post.DoesNotExist:
-        newPost = Post(id=elem.attrib['PostId'])
-        newPost.save()
+        relatedPost = Post(id=elem.attrib['PostId'])
+        relatedPost.save()
 
     newVote = Vote(
             id = elem.attrib['Id'],
-            postId = newPost,
+            postId = relatedPost,
             voteTypeId = elem.attrib['VoteTypeId'],
             creationDate = elem.attrib['CreationDate'],
     )
@@ -57,19 +57,50 @@ def insertVote(elem):
     if elem.attrib.has_key('UserId'):
         # create rows on foreignkey tables, if necessary
         try:
-            newUser = User.objects.get(id=elem.attrib['UserId'])
+            voter = User.objects.get(id=elem.attrib['UserId'])
         except User.DoesNotExist:
-            newUser = User(id=elem.attrib['UserId'])
-            newUser.save()
-        newVote.userId = newUser
+            voter  = User(id=elem.attrib['UserId'])
+            voter.save()
+        newVote.userId = voter
 
     if elem.attrib.has_key('BountyAmount'):
         newVote.bountyAmount = elem.attrib['BountyAmount']
         
     newVote.save()
 
-def insertBadge(table):
-    print 'NaN'
+def insertBadge(elem):
+    try:
+        badgeOwner = User.objects.get(id=elem.attrib['UserId'])
+    except User.DoesNotExist:
+        badgeOwner = User(id=elem.attrib['UserId'])
+        badgeOwner.save()
+    newBadge = Badge(
+            id = elem.attrib['Id'],
+            userId = badgeOwner,
+            name = elem.attrib['Name'],
+            date = elem.attrib['Date'],
+    )
+    newBadge.save()
+
+def insertPost(elem):
+    newPost = Post(
+            id = elem.attrib['Id'],
+            postTypeId = elem.attrib['PostTypeId'],
+            creationDate = elem.attrib['CreationDate'],
+            deletionDate = elem.attrib['DeletionDate']
+            score = elem.attrib['Score'],
+            viewCount = elem.attrib['ViewCount'],
+            body = elem.attrib['Body'],
+            lastActivityDate = elem.attrib['LastActivityDate'],
+            commentCount = elem.attrib['CommentCount'],
+            favoriteCount = elem.attrib['FavoriteCount'],
+    )
+    if newPost.postTypeId == 1:
+        # TODO: is possible this id be invalid?
+        newPost.acceptedAnswerId = Post.object.get(id=elem.attrib['AcceptedAnswerId'])
+    if newPost.postTypeId == 2:
+        # TODO: is possible this id be invalid?
+        newPost.parentId = Post.object.get(id=elem.attrib['ParentId'])
 
 insertRow = {
         'votes': insertVote,
@@ -105,7 +136,7 @@ class Command(BaseCommand):
                     parser = XMLParser(huge_tree=True)
                     table = objectify.fromstring(xml, parser=parser)
                     ###devared2a###
-                    if table.tag == 'votes':
+                    if table.tag == 'badges':
                     ###enddev###
 
                         print 'Inserting ' + table.tag + ' from ' + fileXML
