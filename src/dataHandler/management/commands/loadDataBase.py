@@ -33,45 +33,64 @@ import pyunpack
 import shutil
 from lxml import objectify
 from lxml.etree import XMLParser
+from django.core.management.base import BaseCommand, CommandError
+from django.utils import translation
 
 defaultFolder = "../stackexchange/" 
 dataPattern = '.7z'
 tmpFolder = "./tmp"
 
-def main(args=defaultFolder):
-    # TODO: Handle user inputs and load it on data structures
-    folder = defaultFolder
+class Command(BaseCommand):
+    help = 'Load data dump on DataBase'
 
-    # create temporary dir for descompressing data
-    if os.path.exists(tmpFolder):
-        print 'Warning: removing existent folder ' + tmpFolder
-        shutil.rmtree(tmpFolder)
-    os.makedirs(tmpFolder)
+    def handle(self, *args, **options):
+        # TODO: Handle user inputs and load it on data structures
+        folder = defaultFolder
 
-    print 'Generating .tz files list from ' + defaultFolder
-    for root,_,files in os.walk(folder):
-        gen7z = (file7z for file7z in files if file7z.endswith(dataPattern))
-        for file7z in gen7z:
-            dataPath = os.path.join(root, file7z)
-            pyunpack.Archive(dataPath).extractall(tmpFolder)
-            genXML = (fileXML for fileXML in os.listdir(tmpFolder))
-            for fileXML in genXML:
-                print 'Loading data from ' + fileXML + ' extracted from ' + root + file7z
+        # create temporary dir for descompressing data
+        if os.path.exists(tmpFolder):
+            print 'Warning: removing existent folder ' + tmpFolder
+            shutil.rmtree(tmpFolder)
+        os.makedirs(tmpFolder)
 
-                with open(os.path.join(tmpFolder, fileXML)) as f:
-                    xml = f.read()
+        print 'Generating .tz files list from ' + defaultFolder
+        for root,_,files in os.walk(folder):
+            gen7z = (file7z for file7z in files if file7z.endswith(dataPattern))
+            for file7z in gen7z:
+                dataPath = os.path.join(root, file7z)
+                pyunpack.Archive(dataPath).extractall(tmpFolder)
+                genXML = (fileXML for fileXML in os.listdir(tmpFolder))
+                for fileXML in genXML:
+                    print 'Loading data from ' + fileXML + ' extracted from ' + root + file7z
 
-                # huge_tree=True is a workaround for the bug #1285592 on lxml library
-                parser = XMLParser(huge_tree=True)
-                table = objectify.fromstring(xml, parser=parser)
-                ### dev area
-                for elem in table.getchildren():
-                    print elem.attrib
+                    with open(os.path.join(tmpFolder, fileXML)) as f:
+                        xml = f.read()
+
+                    # huge_tree=True is a workaround for the bug #1285592 on lxml library
+                    parser = XMLParser(huge_tree=True)
+                    table = objectify.fromstring(xml, parser=parser)
+
+                    print 'Inserting ' + table.tag + ' from ' + tmpFolder + fileXML
+                    insertRow[table.tag](table)
+                    # dev break!!!!!
+                    break
                 # dev break!!!!!
                 break
-            # dev break!!!!!
-            break
-    shutil.rmtree(tmpFolder)
+        shutil.rmtree(tmpFolder)
 
-if __name__ == '__main__':
-    main(sys.argv)
+def insertVote(table):
+    for elem in table.getchildren():
+        print elem.attrib
+
+def insertBadge(table):
+    print 'NaN'
+
+insertRow = {
+        'votes': insertVote,
+        'badges': insertBadge,
+}
+
+def main(args=defaultFolder):
+    
+
+
