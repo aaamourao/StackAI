@@ -5,7 +5,7 @@ django-toolbelt==0.0.1
 EasyProcess==0.2.2
 gunicorn==19.4.5
 lxml==3.6.0
-mysql-connector-python==1.0.12
+mysql-connector-python==2.0.4
 MySQL-python==1.2.5
 path.py==8.1.2
 patool==1.12
