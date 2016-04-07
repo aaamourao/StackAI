@@ -29,17 +29,17 @@ from django.db import models
 
 class User(models.Model):
     id = models.AutoField(primary_key=True)
-    reputation = models.IntegerField()
-    creationDate = models.DateTimeField()
-    displayName = models.CharField(max_length=200)
-    lastAccessDate = models.DateTimeField()
-    webSiteURL = models.URLField()
-    location = models.CharField(max_length=1024)
-    age = models.IntegerField()
-    aboutMe = models.TextField()
-    upVotes = models.IntegerField()
-    downVotes = models.IntegerField()
-    emailHash = models.CharField(max_length=200)
+    reputation = models.IntegerField(blank=True,null=True,default=None)
+    creationDate = models.DateTimeField(blank=True,null=True,default=None)
+    displayName = models.CharField(max_length=200, blank=True,null=True,default=None)
+    lastAccessDate = models.DateTimeField(blank=True,null=True,default=None)
+    webSiteURL = models.URLField(blank=True,null=True,default=None)
+    location = models.CharField(max_length=1024,blank=True,null=True,default=None)
+    age = models.IntegerField(blank=True,null=True,default=None)
+    aboutMe = models.TextField(blank=True,null=True,default=None)
+    upVotes = models.IntegerField(blank=True,null=True,default=None)
+    downVotes = models.IntegerField(blank=True,null=True,default=None)
+    emailHash = models.CharField(max_length=200, blank=True,null=True,default=None)
 
 # Post types allowed
 POST_TYPES = (
@@ -49,31 +49,31 @@ POST_TYPES = (
 
 class Post(models.Model):
     id = models.AutoField(primary_key=True)
-    postTypeId = models.IntegerField(choices=POST_TYPES)
+    postTypeId = models.IntegerField(choices=POST_TYPES,default=2)
     # TODO: postId is defined only if postTypeId=2
-    postId = models.ForeignKey('self', related_name='base_question')
+    postId = models.ForeignKey('self', related_name='base_question',blank=True,null=True,default=None)
     # TODO: acceptedAnswerId is defined only if postTypeId=1
-    acceptedAnswerId = models.ForeignKey('self', related_name='main_answer')
-    creationDate = models.DateTimeField()
-    score = models.IntegerField()
-    viewCount = models.IntegerField()
-    body = models.TextField()
+    acceptedAnswerId = models.ForeignKey('self', related_name='main_answer',blank=True,null=True,default=None)
+    creationDate = models.DateTimeField(blank=True,null=True,default=None)
+    score = models.IntegerField(blank=True,null=True,default=None)
+    viewCount = models.IntegerField(blank=True,null=True,default=None)
+    body = models.TextField(blank=True,null=True,default=None)
     # TODO: ownerUserId is present only if user has not been deleted
-    ownerUserId = models.ForeignKey(User, related_name='post_owner')
-    lastEditorUserId = models.ForeignKey(User, related_name='last_editor')
-    lastEditorDisplayName = models.CharField(max_length=200)
+    ownerUserId = models.ForeignKey(User, related_name='post_owner',blank=True,null=True,default=None)
+    lastEditorUserId = models.ForeignKey(User, related_name='last_editor',blank=True,null=True,default=None)
+    lastEditorDisplayName = models.CharField(max_length=200,blank=True,null=True,default=None)
     # TODO: insert default value
-    lastEditDate = models.DateTimeField()
+    lastEditDate = models.DateTimeField(blank=True,null=True,default=None)
     # TODO: insert default value
-    lastActivityDate = models.DateTimeField()
+    lastActivityDate = models.DateTimeField(blank=True,null=True,default=None)
     # TODO: only exists if community wikied
-    communityOwnedDate = models.DateTimeField()
-    title = models.CharField(max_length=1024)
-    tags = models.TextField()
-    answerCount = models.IntegerField()
-    commentCount = models.IntegerField()
-    favoriteCount = models.IntegerField()
-    closedDate = models.DateTimeField()
+    communityOwnedDate = models.DateTimeField(blank=True,null=True,default=None)
+    title = models.CharField(max_length=1024,blank=True,null=True,default=None)
+    tags = models.TextField(blank=True,null=True,default=None)
+    answerCount = models.IntegerField(blank=True,null=True,default=None)
+    commentCount = models.IntegerField(blank=True,null=True,default=None)
+    favoriteCount = models.IntegerField(blank=True,null=True,default=None)
+    closedDate = models.DateTimeField(blank=True,null=True,default=None)
 
 class Badge(models.Model):
     id = models.AutoField(primary_key=True)
@@ -108,8 +108,8 @@ VOTE_TYPES = (
 
 class Vote(models.Model):
     id = models.AutoField(primary_key=True)
-    postId = models.ForeignKey(Post, on_delete=models.CASCADE)
-    userId = models.ForeignKey(User, on_delete=models.CASCADE)
+    postId = models.ForeignKey(Post,on_delete=models.CASCADE)
+    userId = models.ForeignKey(User,blank=True,null=True,default=None)
     voteTypeId = models.IntegerField(choices=VOTE_TYPES)
     creationDate = models.DateTimeField()
-    BountyAmount = models.IntegerField()
+    BountyAmount = models.IntegerField(default=0)

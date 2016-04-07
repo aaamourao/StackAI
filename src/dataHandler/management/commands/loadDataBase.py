@@ -35,6 +35,7 @@ from lxml import objectify
 from lxml.etree import XMLParser
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import translation
+from dataHandler.models import *
 
 defaultFolder = "../stackexchange/" 
 dataPattern = '.7z'
@@ -42,7 +43,34 @@ tmpFolder = "./tmp"
 
 def insertVote(table):
     for elem in table.getchildren():
-        print elem.attrib
+        # create rows on foreignkey tables, if necessary
+        try:
+            newPost = Post.objects.get(id=elem.attrib['PostId'])
+        except Post.DoesNotExist:
+            newPost = Post(id=elem.attrib['PostId'])
+            newPost.save()
+
+        newVote = Vote( 
+                id = elem.attrib['Id'],
+                postId = newPost,
+                voteTypeId = elem.attrib['VoteTypeId'],
+                creationDate = elem.attrib['CreationDate'],
+        )
+        # optional attributes
+        if elem.attrib.has_key('UserId'):
+            # create rows on foreignkey tables, if necessary
+            try:
+                newUser = User.objects.get(id=elem.attrib['UserId'])
+            except User.DoesNotExist:
+                newUser = User(id=elem.attrib['UserId'])
+                newUser.save()
+            newVote.userId = newUser
+
+        if elem.attrib.has_key('BountyAmount'):
+            newVote.bountyAmount = elem.attrib['BountyAmount']
+            
+        newVote.save()
+        print 'Vote saved. Id = ' + newVote.id
 
 def insertBadge(table):
     print 'NaN'
@@ -82,7 +110,7 @@ class Command(BaseCommand):
                     parser = XMLParser(huge_tree=True)
                     table = objectify.fromstring(xml, parser=parser)
 
-                    print 'Inserting ' + table.tag + ' from ' + tmpFolder + fileXML
+                    print 'Inserting ' + table.tag + ' from ' + tmpFolder + '/' + fileXML
                     insertRow[table.tag](table)
                     # dev break!!!!!
                     break
