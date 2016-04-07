@@ -27,5 +27,5 @@ The project is on alpha stage. There are a project road map and devel instructio
 #### Coders
 
 * Adriano Mourao - @aaamourao - mourao.aaa@gmail.com
-* Juliana Nunes - juliananunescomp@gmail.com
+* Juliana Nunes - @juliananunescomp - juliananunescomp@gmail.com
 * Vinícius Garcia - @vingarcia - vingarcia00@gmail.com
