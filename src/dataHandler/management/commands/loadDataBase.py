@@ -39,48 +39,34 @@ defaultFolder = "../stackexchange/"
 dataPattern = '.7z'
 tmpFolder = "./tmp"
 
-def insertVote(table):
-    elemList = table.getchildren()
-    # progress bar initial setup
-    with ProgressBar(max_value=len(elemList)) as progress:
-        progUpdt = 0
+def insertVote(elem):
+    # create rows on foreignkey tables, if necessary
+    try:
+        newPost = Post.objects.get(id=elem.attrib['PostId'])
+    except Post.DoesNotExist:
+        newPost = Post(id=elem.attrib['PostId'])
+        newPost.save()
 
-        origStderr = sys.stderr
-        with open(table.tag + '.log', 'w+') as logFile:
-            # change stderr to log file
-            sys.stderr = logFile
-            for elem in elemList:
-                # create rows on foreignkey tables, if necessary
-                try:
-                    newPost = Post.objects.get(id=elem.attrib['PostId'])
-                except Post.DoesNotExist:
-                    newPost = Post(id=elem.attrib['PostId'])
-                    newPost.save()
+    newVote = Vote(
+            id = elem.attrib['Id'],
+            postId = newPost,
+            voteTypeId = elem.attrib['VoteTypeId'],
+            creationDate = elem.attrib['CreationDate'],
+    )
+    # optional attributes
+    if elem.attrib.has_key('UserId'):
+        # create rows on foreignkey tables, if necessary
+        try:
+            newUser = User.objects.get(id=elem.attrib['UserId'])
+        except User.DoesNotExist:
+            newUser = User(id=elem.attrib['UserId'])
+            newUser.save()
+        newVote.userId = newUser
 
-                newVote = Vote( 
-                        id = elem.attrib['Id'],
-                        postId = newPost,
-                        voteTypeId = elem.attrib['VoteTypeId'],
-                        creationDate = elem.attrib['CreationDate'],
-                )
-                # optional attributes
-                if elem.attrib.has_key('UserId'):
-                    # create rows on foreignkey tables, if necessary
-                    try:
-                        newUser = User.objects.get(id=elem.attrib['UserId'])
-                    except User.DoesNotExist:
-                        newUser = User(id=elem.attrib['UserId'])
-                        newUser.save()
-                    newVote.userId = newUser
-
-                if elem.attrib.has_key('BountyAmount'):
-                    newVote.bountyAmount = elem.attrib['BountyAmount']
-                    
-                newVote.save()
-                # update and increment progress
-                progress.update(progUpdt)
-                progUpdt += 1
-            sys.stderr = origStderr
+    if elem.attrib.has_key('BountyAmount'):
+        newVote.bountyAmount = elem.attrib['BountyAmount']
+        
+    newVote.save()
 
 def insertBadge(table):
     print 'NaN'
@@ -122,8 +108,16 @@ class Command(BaseCommand):
                     if table.tag == 'votes':
                     ###enddev###
 
-                        print 'Inserting ' + table.tag + ' from ' + tmpFolder + '/' + fileXML
-                        insertRow[table.tag](table)
+                        print 'Inserting ' + table.tag + ' from ' + fileXML
+                        elemList = table.getchildren()
+                        # progress bar initial setup
+                        with ProgressBar(max_value=len(elemList)) as progress:
+                            progUpdt = 0
+                            for elem in elemList:
+                                insertRow[table.tag](elem)
+                                # update and increment progress
+                                progress.update(progUpdt)
+                                progUpdt += 1
                         # dev break!!!!!
                         break
         shutil.rmtree(tmpFolder)
