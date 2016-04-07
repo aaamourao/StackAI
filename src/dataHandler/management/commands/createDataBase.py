@@ -53,7 +53,7 @@ class Command(BaseCommand):
         print 'Succesfully created StackAI user\n'
         print 'Creating stackexchange database'
         cursor.execute('create database stackexchange')
-        print 'Succesfully created StackAI user\n'
+        print 'Succesfully created stackexchange database\n'
         cursor.execute("grant all privileges on stackexchange . * to 'StackAI'@'localhost'")
         cursor.execute("flush privileges")
         print 'Success! StackAI has stackexchange database privileges\n'
