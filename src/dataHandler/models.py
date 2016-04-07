@@ -57,6 +57,7 @@ class Post(models.Model):
     # TODO: parentId is defined only if postTypeId=1
     parentId = models.ForeignKey('self', related_name='target_question',blank=True,null=True,default=None)
     creationDate = models.DateTimeField(blank=True,null=True,default=None)
+    deletionDate = models.DateTimeField(blank=True,null=True,default=None)
     score = models.IntegerField(blank=True,null=True,default=None)
     viewCount = models.IntegerField(blank=True,null=True,default=None)
     body = models.TextField(blank=True,null=True,default=None)
