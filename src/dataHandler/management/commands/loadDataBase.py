@@ -40,6 +40,18 @@ defaultFolder = "../stackexchange/"
 dataPattern = '.7z'
 tmpFolder = "./tmp"
 
+def insertVote(table):
+    for elem in table.getchildren():
+        print elem.attrib
+
+def insertBadge(table):
+    print 'NaN'
+
+insertRow = {
+        'votes': insertVote,
+        'badges': insertBadge,
+}
+
 class Command(BaseCommand):
     help = 'Load data dump on DataBase'
 
@@ -77,20 +89,3 @@ class Command(BaseCommand):
                 # dev break!!!!!
                 break
         shutil.rmtree(tmpFolder)
-
-def insertVote(table):
-    for elem in table.getchildren():
-        print elem.attrib
-
-def insertBadge(table):
-    print 'NaN'
-
-insertRow = {
-        'votes': insertVote,
-        'badges': insertBadge,
-}
-
-def main(args=defaultFolder):
-    
-
-
