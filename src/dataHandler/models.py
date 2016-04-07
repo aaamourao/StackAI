@@ -54,6 +54,8 @@ class Post(models.Model):
     postId = models.ForeignKey('self', related_name='base_question',blank=True,null=True,default=None)
     # TODO: acceptedAnswerId is defined only if postTypeId=1
     acceptedAnswerId = models.ForeignKey('self', related_name='main_answer',blank=True,null=True,default=None)
+    # TODO: parentId is defined only if postTypeId=1
+    parentId = models.ForeignKey('self', related_name='target_question',blank=True,null=True,default=None)
     creationDate = models.DateTimeField(blank=True,null=True,default=None)
     score = models.IntegerField(blank=True,null=True,default=None)
     viewCount = models.IntegerField(blank=True,null=True,default=None)
