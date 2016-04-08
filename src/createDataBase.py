@@ -26,8 +26,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# First, it's desabled database settings for prevent django to access
-# it with invalid user: there is no database configuration file yet
 import mysql.connector
 import getpass
 import sys
