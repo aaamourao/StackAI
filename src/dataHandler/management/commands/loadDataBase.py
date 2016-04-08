@@ -87,7 +87,7 @@ def insertPost(elem):
             id = elem.attrib['Id'],
             postTypeId = elem.attrib['PostTypeId'],
             creationDate = elem.attrib['CreationDate'],
-            deletionDate = elem.attrib['DeletionDate']
+            deletionDate = elem.attrib['DeletionDate'],
             score = elem.attrib['Score'],
             viewCount = elem.attrib['ViewCount'],
             body = elem.attrib['Body'],
