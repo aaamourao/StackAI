@@ -87,24 +87,27 @@ def insertPost(elem):
             id = elem.attrib['Id'],
             postTypeId = elem.attrib['PostTypeId'],
             creationDate = elem.attrib['CreationDate'],
-            deletionDate = elem.attrib['DeletionDate'],
             score = elem.attrib['Score'],
-            viewCount = elem.attrib['ViewCount'],
             body = elem.attrib['Body'],
             lastActivityDate = elem.attrib['LastActivityDate'],
             commentCount = elem.attrib['CommentCount'],
-            favoriteCount = elem.attrib['FavoriteCount'],
     )
+    if elem.attrib.has_key('DeletionDate'):
+        newPost.deletionDate = elem.attrib['DeletionDate']
+    if elem.attrib.has_key('ViewCount'):
+        newPost.viewCount = elem.attrib['ViewCount']
+    if elem.attrib.has_key('FavoriteCount'):
+        newPost.favoriteCount = elem.attrib['FavoriteCount']
     if newPost.postTypeId == 1:
-        # TODO: is possible this id be invalid?
         newPost.acceptedAnswerId = Post.object.get(id=elem.attrib['AcceptedAnswerId'])
     if newPost.postTypeId == 2:
-        # TODO: is possible this id be invalid?
         newPost.parentId = Post.object.get(id=elem.attrib['ParentId'])
+    newPost.save()
 
 insertRow = {
         'votes': insertVote,
         'badges': insertBadge,
+        'posts': insertPost,
 }
 
 class Command(BaseCommand):
@@ -136,7 +139,7 @@ class Command(BaseCommand):
                     parser = XMLParser(huge_tree=True)
                     table = objectify.fromstring(xml, parser=parser)
                     ###devared2a###
-                    if table.tag == 'badges':
+                    if table.tag == 'posts':
                     ###enddev###
 
                         print 'Inserting ' + table.tag + ' from ' + fileXML
@@ -151,4 +154,8 @@ class Command(BaseCommand):
                                 progUpdt += 1
                         # dev break!!!!!
                         break
+                # dev break!!!!!
+                break
+            # dev break!!!!!
+            break
         shutil.rmtree(tmpFolder)
