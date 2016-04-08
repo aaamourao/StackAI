@@ -37,6 +37,7 @@ class User(models.Model):
     location = models.CharField(max_length=1024,blank=True,null=True,default=None)
     age = models.IntegerField(blank=True,null=True,default=None)
     aboutMe = models.TextField(blank=True,null=True,default=None)
+    views = models.IntegerField(blank=True,null=True,default=None)
     upVotes = models.IntegerField(blank=True,null=True,default=None)
     downVotes = models.IntegerField(blank=True,null=True,default=None)
     emailHash = models.CharField(max_length=200, blank=True,null=True,default=None)
