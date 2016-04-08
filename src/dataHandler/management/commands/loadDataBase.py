@@ -99,16 +99,63 @@ def insertPost(elem):
     if elem.attrib.has_key('FavoriteCount'):
         newPost.favoriteCount = elem.attrib['FavoriteCount']
     if newPost.postTypeId == 1:
-        newPost.acceptedAnswerId = Post.object.get(id=elem.attrib['AcceptedAnswerId'])
+        newPost.acceptedAnswerId = Post.objects.get(id=elem.attrib['AcceptedAnswerId'])
     if newPost.postTypeId == 2:
-        newPost.parentId = Post.object.get(id=elem.attrib['ParentId'])
+        newPost.parentId = Post.objects.get(id=elem.attrib['ParentId'])
     newPost.save()
+
+def insertUser(elem):
+    newUser = User(
+            id = elem.attrib['Id'],
+            reputation = elem.attrib['Reputation'],
+            creationDate = elem.attrib['CreationDate'],
+            displayName = elem.attrib['DisplayName'],
+            lastAccessDate = elem.attrib['LastAccessDate'],
+            views = elem.attrib['Views'],
+            upVotes = elem.attrib['UpVotes'],
+            downVotes = elem.attrib['DownVotes'],
+    )
+    # optional attributes
+    if elem.attrib.has_key('AccountId'):
+        newUser.accountId = elem.attrib['AccountId']
+    if elem.attrib.has_key('AboutMe'):
+        newUser.aboutMe = elem.attrib['AboutMe']
+    if elem.attrib.has_key('Location'):
+        newUser.location = elem.attrib['Location']
+    if elem.attrib.has_key('WebsiteUrl'):
+        newUser.webSiteURL = elem.attrib['WebsiteUrl']
+    if elem.attrib.has_key('EmailHash'):
+        newUser.emailHash = elem.attrib['EmailHash']
+    if elem.attrib.has_key('Age'):
+        newUser.age = elem.attrib['Age']
+    newUser.save()
+
+def insertComment(elem):
+    # get foreignkey objects
+    relatedPost = Post.objects.get(id=elem.attrib['PostId'])
+    newComment = Comment(
+            id = elem.attrib['Id'],
+            postId = relatedPost,
+            text = elem.attrib['Text'],
+            creationDate = elem.attrib['CreationDate'],
+    )
+    # optional attributes
+    if elem.attrib.has_key('UserId'):
+        newComment = User.objects.get(id=elem.attrib['UserId'])
+    if elem.attrib.has_key('Score'):
+        newComment.score = elem.attrib['Score']
+    if elem.attrib.has_key('UserDisplayName'):
+        newComment.userDisplayName = elem.attrib['UserDisplayName'],
 
 insertRow = {
         'votes': insertVote,
         'badges': insertBadge,
         'posts': insertPost,
+        'users': insertUser,
+        'comments': insertComment,
 }
+
+xmlSortOrder = {'Users.xml': 0, 'Posts.xml': 1, 'Comments.xml': 2, 'Votes.xml': 3, 'Badges.xml': 4}
 
 class Command(BaseCommand):
     help = 'Load data dump on DataBase'
@@ -117,20 +164,31 @@ class Command(BaseCommand):
         # TODO: Handle user inputs and load it on data structures
         folder = defaultFolder
 
-        # create temporary dir for descompressing data
+        # remove temporary folder if it exists
         if os.path.exists(tmpFolder):
             print 'Warning: removing existent folder ' + tmpFolder
             shutil.rmtree(tmpFolder)
-        os.makedirs(tmpFolder)
 
         print 'Generating .tz files list from ' + defaultFolder
         for root,_,files in os.walk(folder):
             gen7z = (file7z for file7z in files if file7z.endswith(dataPattern))
             for file7z in gen7z:
                 dataPath = os.path.join(root, file7z)
+
+                # create temporary folder and unpack its contents
+                os.makedirs(tmpFolder)
                 pyunpack.Archive(dataPath).extractall(tmpFolder)
-                genXML = (fileXML for fileXML in os.listdir(tmpFolder))
-                for fileXML in genXML:
+
+                # genXML is not properly a generator object due to .sort use on for loop
+                # but it works like one
+                genXML = [fileXML for fileXML in os.listdir(tmpFolder)]
+
+                # genXML should have only supported tables
+                supportedTables = list(xmlSortOrder.keys())
+                notSupported = set(genXML) - set(supportedTables)
+                genXML = list(set(genXML) - notSupported)
+
+                for fileXML in sorted(genXML, key=lambda val: xmlSortOrder[val]):
                     print 'Loading data from ' + fileXML + ' extracted from ' + root + file7z
                     with open(os.path.join(tmpFolder, fileXML)) as f:
                         xml = f.read()
@@ -138,24 +196,16 @@ class Command(BaseCommand):
                     # huge_tree=True is a workaround for the bug #1285592 on lxml library
                     parser = XMLParser(huge_tree=True)
                     table = objectify.fromstring(xml, parser=parser)
-                    ###devared2a###
-                    if table.tag == 'posts':
-                    ###enddev###
 
-                        print 'Inserting ' + table.tag + ' from ' + fileXML
-                        elemList = table.getchildren()
-                        # progress bar initial setup
-                        with ProgressBar(max_value=len(elemList)) as progress:
-                            progUpdt = 0
-                            for elem in elemList:
-                                insertRow[table.tag](elem)
-                                # update and increment progress
-                                progress.update(progUpdt)
-                                progUpdt += 1
-                        # dev break!!!!!
-                        break
-                # dev break!!!!!
-                break
-            # dev break!!!!!
-            break
-        shutil.rmtree(tmpFolder)
+                    print 'Inserting ' + table.tag + ' from ' + fileXML
+                    elemList = table.getchildren()
+                    # progress bar initial setup
+                    with ProgressBar(max_value=len(elemList)) as progress:
+                        progUpdt = 0
+                        for elem in elemList:
+                            insertRow[table.tag](elem)
+                            # update and increment progress
+                            progress.update(progUpdt)
+                            progUpdt += 1
+                # remove tmp folder 
+                shutil.rmtree(tmpFolder)
