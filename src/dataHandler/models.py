@@ -86,6 +86,7 @@ class Comment(models.Model):
     text = models.TextField()
     creationDate = models.DateTimeField()
     userId = models.ForeignKey(User)
+    userDisplayName = models.CharField(max_length=1024)
 
 # Vote types allowed
 VOTE_TYPES = (
