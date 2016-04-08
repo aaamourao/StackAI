@@ -85,7 +85,7 @@ class Comment(models.Model):
     score = models.IntegerField()
     text = models.TextField()
     creationDate = models.DateTimeField()
-    userId = models.ForeignKey(User, on_delete=models.CASCADE)
+    userId = models.ForeignKey(User)
 
 # Vote types allowed
 VOTE_TYPES = (
