@@ -52,26 +52,19 @@ POST_TYPES = (
 class Post(models.Model):
     id = models.AutoField(primary_key=True)
     postTypeId = models.IntegerField(choices=POST_TYPES,default=2)
-    # TODO: postId is defined only if postTypeId=2
     postId = models.ForeignKey('self', related_name='base_question',blank=True,null=True,default=None)
-    # TODO: acceptedAnswerId is defined only if postTypeId=1
     acceptedAnswerId = models.ForeignKey('self', related_name='main_answer',blank=True,null=True,default=None)
-    # TODO: parentId is defined only if postTypeId=1
     parentId = models.ForeignKey('self', related_name='target_question',blank=True,null=True,default=None)
     creationDate = models.DateTimeField(blank=True,null=True,default=None)
     deletionDate = models.DateTimeField(blank=True,null=True,default=None)
     score = models.IntegerField(blank=True,null=True,default=None)
     viewCount = models.IntegerField(blank=True,null=True,default=None)
     body = models.TextField(blank=True,null=True,default=None)
-    # TODO: ownerUserId is present only if user has not been deleted
     ownerUserId = models.ForeignKey(User, related_name='post_owner',blank=True,null=True,default=None)
     lastEditorUserId = models.ForeignKey(User, related_name='last_editor',blank=True,null=True,default=None)
     lastEditorDisplayName = models.CharField(max_length=200,blank=True,null=True,default=None)
-    # TODO: insert default value
     lastEditDate = models.DateTimeField(blank=True,null=True,default=None)
-    # TODO: insert default value
     lastActivityDate = models.DateTimeField(blank=True,null=True,default=None)
-    # TODO: only exists if community wikied
     communityOwnedDate = models.DateTimeField(blank=True,null=True,default=None)
     title = models.CharField(max_length=1024,blank=True,null=True,default=None)
     tags = models.TextField(blank=True,null=True,default=None)
