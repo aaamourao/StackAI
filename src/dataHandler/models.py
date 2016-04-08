@@ -41,6 +41,7 @@ class User(models.Model):
     upVotes = models.IntegerField(blank=True,null=True,default=None)
     downVotes = models.IntegerField(blank=True,null=True,default=None)
     emailHash = models.CharField(max_length=200, blank=True,null=True,default=None)
+    accountId = models.IntegerField(blank=True,null=True,default=None)
 
 # Post types allowed
 POST_TYPES = (
