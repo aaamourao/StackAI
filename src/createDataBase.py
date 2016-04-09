@@ -41,7 +41,7 @@ def createDataBase(args):
     # connect to mysql database
     cnx = mysql.connector.connect(user='root', passwd=rootPasswd)
     print 'Successfully connected to MySQL as root' 
-    print 'Creating StackAI host @localhost'
+    print 'Creating StackAI user @localhost'
     print 'Type MySQL password for StackAI user. It will be stored on local file'
     stackAIPasswd = getpass.getpass(prompt='> StackAI@localhost password:')
     reStackAIPasswd = getpass.getpass(prompt='> Type StackAI password again:')
@@ -50,10 +50,10 @@ def createDataBase(args):
         raise NameError("Passwords don't match")
 
     cursor = cnx.cursor()
-    cursor.execute("create user StackAI@localhost identified by " + stackAIPasswd)
+    cursor.execute("create user StackAI@localhost identified by '" + stackAIPasswd + "'")
     print 'Successfully created StackAI user\n'
     print 'Creating stackexchange database'
-    cursor.execute('create database stackexchange')
+    cursor.execute('create database stackexchange character set utf8')
     print 'Succesfully created stackexchange database\n'
     print'Creating database conf file on ' + databaseConfPath
     with open(databaseConfPath, 'w') as databaseFile:
