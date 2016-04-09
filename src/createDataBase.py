@@ -50,7 +50,7 @@ def createDataBase(args):
         raise NameError("Passwords don't match")
 
     cursor = cnx.cursor()
-    cursor.execute("create user 'StackAI'@'localhost' identified by '" + stackAIPasswd + "'")
+    cursor.execute("create user StackAI@localhost identified by " + stackAIPasswd)
     print 'Successfully created StackAI user\n'
     print 'Creating stackexchange database'
     cursor.execute('create database stackexchange')
@@ -61,7 +61,7 @@ def createDataBase(args):
         databaseFile.write('password = ' + stackAIPasswd)
         databaseFile.write('\ndefault-character-set = utf8')
     print('Successfully created database.cnf\n')
-    cursor.execute("grant all privileges on stackexchange . * to 'StackAI'@'localhost'")
+    cursor.execute("grant all privileges on stackexchange . * to StackAI@localhost")
     cursor.execute("flush privileges")
     print 'Success! StackAI has stackexchange database privileges\n'
     print 'Now execute: python manage.py migrate'
