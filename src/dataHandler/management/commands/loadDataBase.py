@@ -40,7 +40,10 @@ dataPattern = '.7z'
 tmpFolder = "./tmp"
 
 def insertVote(elem):
-    # create rows on foreignkey tables, if necessary
+    # get foreign key objects
+    # TODO: The EXCEPT should be deprecated due to insert sort order implementation
+    # and issue #10 resolved
+    # Its deletion will be dicussed further
     try:
         relatedPost = Post.objects.get(id=elem.attrib['PostId'])
     except Post.DoesNotExist:
@@ -54,6 +57,9 @@ def insertVote(elem):
             creationDate = elem.attrib['CreationDate'],
     )
     # optional attributes
+    # TODO: The EXCEPT should be deprecated due to insert sort order implementation
+    # and issue #10 resolved
+    # Its deletion will be dicussed further
     if elem.attrib.has_key('UserId'):
         # create rows on foreignkey tables, if necessary
         try:
@@ -63,12 +69,16 @@ def insertVote(elem):
             voter.save()
         newVote.userId = voter
 
-    if elem.attrib.has_key('BountyAmount'):
+    if newVote.voteTypeId in [8, 9]:
         newVote.bountyAmount = elem.attrib['BountyAmount']
         
     newVote.save()
 
 def insertBadge(elem):
+    # get foreign key objects
+    # TODO: The EXCEPT should be deprecated due to insert sort order implementation
+    # and issue #10 resolved
+    # Its deletion will be dicussed further
     try:
         badgeOwner = User.objects.get(id=elem.attrib['UserId'])
     except User.DoesNotExist:
@@ -172,6 +182,7 @@ class Command(BaseCommand):
         print 'Generating .tz files list from ' + defaultFolder
         for root,_,files in os.walk(folder):
             gen7z = (file7z for file7z in files if file7z.endswith(dataPattern))
+
             for file7z in gen7z:
                 dataPath = os.path.join(root, file7z)
 
@@ -200,12 +211,12 @@ class Command(BaseCommand):
                     print 'Inserting ' + table.tag + ' from ' + fileXML
                     elemList = table.getchildren()
                     # progress bar initial setup
-                    with ProgressBar(max_value=len(elemList)) as progress:
-                        progUpdt = 0
+                    with ProgressBar(max_value=len(elemList)) as progressInsert:
+                        progUpdtInsert = 0
                         for elem in elemList:
                             insertRow[table.tag](elem)
                             # update and increment progress
-                            progress.update(progUpdt)
-                            progUpdt += 1
+                            progressInsert.update(progUpdtInsert)
+                            progUpdtInsert += 1
                 # remove tmp folder 
                 shutil.rmtree(tmpFolder)
