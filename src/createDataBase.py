@@ -50,6 +50,7 @@ def createDataBase(args):
         raise NameError("Passwords don't match")
 
     cursor = cnx.cursor()
+    print 'Creating StackAI user'
     cursor.execute("create user StackAI@localhost identified by '" + stackAIPasswd + "'")
     print 'Successfully created StackAI user\n'
     print 'Creating stackexchange database'
