@@ -167,6 +167,7 @@ class Command(BaseCommand):
             for file7z in gen7z:
                 dataPath = os.path.join(root, file7z)
 
+                print 'Descompressing data from ' + dataPath
                 # create temporary folder and unpack its contents
                 os.makedirs(tmpFolder)
                 pyunpack.Archive(dataPath).extractall(tmpFolder)
