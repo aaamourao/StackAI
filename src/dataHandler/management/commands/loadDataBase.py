@@ -55,13 +55,7 @@ def insertVote(elem):
     )
     # optional attributes
     if elem.attrib.has_key('UserId'):
-        # create rows on foreignkey tables, if necessary
-        try:
-            voter = User.objects.get(id=elem.attrib['UserId'])
-        except User.DoesNotExist:
-            voter  = User(id=elem.attrib['UserId'])
-            voter.save()
-        newVote.userId = voter
+        newVote.userId = User.objects.get(id=elem.attrib['UserId'])
 
     if newVote.voteTypeId in [8, 9]:
         newVote.bountyAmount = elem.attrib['BountyAmount']
