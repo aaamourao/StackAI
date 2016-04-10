@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # loadDataBase.py -- This belongs to StackAI
 # Discompress data from StackExchange and load it into django database
 # 
@@ -129,7 +130,10 @@ def insertUser(elem):
     if elem.attrib.has_key('AccountId'):
         newUser.accountId = elem.attrib['AccountId']
     if elem.attrib.has_key('AboutMe'):
-        newUser.aboutMe = elem.attrib['AboutMe']
+        try:
+            newUser.aboutMe = elem.attrib['AboutMe'].encode("utf-8")
+        except:
+            newUser.aboutMe = elem.attrib['AboutMe']
     if elem.attrib.has_key('Location'):
         newUser.location = elem.attrib['Location']
     if elem.attrib.has_key('WebsiteUrl'):

@@ -26,22 +26,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from django.db import models
+from django.utils.encoding import python_2_unicode_compatible
 
+encoding = 'utf-8'
+
+@python_2_unicode_compatible
 class User(models.Model):
     id = models.AutoField(primary_key=True)
-    reputation = models.IntegerField(blank=True,null=True,default=None)
-    creationDate = models.DateTimeField(blank=True,null=True,default=None)
-    displayName = models.CharField(max_length=200, blank=True,null=True,default=None)
-    lastAccessDate = models.DateTimeField(blank=True,null=True,default=None)
+    reputation = models.IntegerField()
+    creationDate = models.DateTimeField()
+    displayName = models.CharField(max_length=200)
+    lastAccessDate = models.DateTimeField()
     webSiteURL = models.URLField(blank=True,null=True,default=None)
-    location = models.CharField(max_length=1024,blank=True,null=True,default=None)
+    location = models.CharField(max_length=1024)
     age = models.IntegerField(blank=True,null=True,default=None)
     aboutMe = models.TextField(blank=True,null=True,default=None)
-    views = models.IntegerField(blank=True,null=True,default=None)
-    upVotes = models.IntegerField(blank=True,null=True,default=None)
-    downVotes = models.IntegerField(blank=True,null=True,default=None)
+    views = models.IntegerField()
+    upVotes = models.IntegerField()
+    downVotes = models.IntegerField()
     emailHash = models.CharField(max_length=200, blank=True,null=True,default=None)
     accountId = models.IntegerField(blank=True,null=True,default=None)
+    def __str__(self):
+        return unicode(self).encode(encoding)
 
 # Post types allowed
 POST_TYPES = (
@@ -49,44 +55,53 @@ POST_TYPES = (
         (2, 'Answer'),
 )
 
+@python_2_unicode_compatible
 class Post(models.Model):
     id = models.AutoField(primary_key=True)
     postTypeId = models.IntegerField(choices=POST_TYPES,default=2)
     postId = models.ForeignKey('self', related_name='base_question',blank=True,null=True,default=None)
     acceptedAnswerId = models.ForeignKey('self', related_name='main_answer',blank=True,null=True,default=None)
     parentId = models.ForeignKey('self', related_name='target_question',blank=True,null=True,default=None)
-    creationDate = models.DateTimeField(blank=True,null=True,default=None)
+    creationDate = models.DateTimeField()
     deletionDate = models.DateTimeField(blank=True,null=True,default=None)
-    score = models.IntegerField(blank=True,null=True,default=None)
+    score = models.IntegerField()
     viewCount = models.IntegerField(blank=True,null=True,default=None)
-    body = models.TextField(blank=True,null=True,default=None)
+    body = models.TextField()
     ownerUserId = models.ForeignKey(User, related_name='post_owner',blank=True,null=True,default=None)
     lastEditorUserId = models.ForeignKey(User, related_name='last_editor',blank=True,null=True,default=None)
     lastEditorDisplayName = models.CharField(max_length=200,blank=True,null=True,default=None)
     lastEditDate = models.DateTimeField(blank=True,null=True,default=None)
-    lastActivityDate = models.DateTimeField(blank=True,null=True,default=None)
+    lastActivityDate = models.DateTimeField()
     communityOwnedDate = models.DateTimeField(blank=True,null=True,default=None)
     title = models.CharField(max_length=1024,blank=True,null=True,default=None)
     tags = models.TextField(blank=True,null=True,default=None)
     answerCount = models.IntegerField(blank=True,null=True,default=None)
-    commentCount = models.IntegerField(blank=True,null=True,default=None)
+    commentCount = models.IntegerField()
     favoriteCount = models.IntegerField(blank=True,null=True,default=None)
     closedDate = models.DateTimeField(blank=True,null=True,default=None)
+    def __str__(self):
+        return unicode(self).encode(encoding)
 
+@python_2_unicode_compatible
 class Badge(models.Model):
     id = models.AutoField(primary_key=True)
     userId = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=1024)
     date = models.DateTimeField()
+    def __str__(self):
+        return unicode(self).encode(encoding)
 
+@python_2_unicode_compatible
 class Comment(models.Model):
     id = models.AutoField(primary_key=True)
     postId = models.ForeignKey(Post, on_delete=models.CASCADE)
-    score = models.IntegerField()
+    score = models.IntegerField(blank=True,null=True,default=None)
     text = models.TextField()
     creationDate = models.DateTimeField()
-    userId = models.ForeignKey(User)
-    userDisplayName = models.CharField(max_length=1024)
+    userId = models.ForeignKey(User,blank=True,null=True,default=None)
+    userDisplayName = models.CharField(max_length=1024,blank=True,null=True,default=None)
+    def __str__(self):
+        return unicode(self).encode(encoding)
 
 # Vote types allowed
 VOTE_TYPES = (
@@ -105,10 +120,13 @@ VOTE_TYPES = (
         (13, 'InfoModerator'),
 )
 
+@python_2_unicode_compatible
 class Vote(models.Model):
     id = models.AutoField(primary_key=True)
     postId = models.ForeignKey(Post,on_delete=models.CASCADE)
     userId = models.ForeignKey(User,blank=True,null=True,default=None)
     voteTypeId = models.IntegerField(choices=VOTE_TYPES)
     creationDate = models.DateTimeField()
-    BountyAmount = models.IntegerField(default=0)
+    BountyAmount = models.IntegerField(blank=True,null=True,default=None)
+    def __str__(self):
+        return unicode(self).encode(encoding)
