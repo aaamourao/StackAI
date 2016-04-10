@@ -42,15 +42,11 @@ tmpFolder = "./tmp"
 
 def insertVote(elem):
     # get foreign key objects
-    # TODO: The EXCEPT should be deprecated due to insert sort order implementation
-    # and issue #10 resolved
-    # Its deletion will be dicussed further
+    # TODO: Issue 21: try/except added due that
     try:
         relatedPost = Post.objects.get(id=elem.attrib['PostId'])
-    except Post.DoesNotExist:
-        relatedPost = Post(id=elem.attrib['PostId'])
-        relatedPost.save()
-
+    except:
+        relatedPost = None;
     newVote = Vote(
             id = elem.attrib['Id'],
             postId = relatedPost,
@@ -58,9 +54,6 @@ def insertVote(elem):
             creationDate = elem.attrib['CreationDate'],
     )
     # optional attributes
-    # TODO: The EXCEPT should be deprecated due to insert sort order implementation
-    # and issue #10 resolved
-    # Its deletion will be dicussed further
     if elem.attrib.has_key('UserId'):
         # create rows on foreignkey tables, if necessary
         try:
@@ -77,14 +70,7 @@ def insertVote(elem):
 
 def insertBadge(elem):
     # get foreign key objects
-    # TODO: The EXCEPT should be deprecated due to insert sort order implementation
-    # and issue #10 resolved
-    # Its deletion will be dicussed further
-    try:
-        badgeOwner = User.objects.get(id=elem.attrib['UserId'])
-    except User.DoesNotExist:
-        badgeOwner = User(id=elem.attrib['UserId'])
-        badgeOwner.save()
+    badgeOwner = User.objects.get(id=elem.attrib['UserId'])
     newBadge = Badge(
             id = elem.attrib['Id'],
             userId = badgeOwner,
@@ -130,10 +116,7 @@ def insertUser(elem):
     if elem.attrib.has_key('AccountId'):
         newUser.accountId = elem.attrib['AccountId']
     if elem.attrib.has_key('AboutMe'):
-        try:
-            newUser.aboutMe = elem.attrib['AboutMe'].encode("utf-8")
-        except:
-            newUser.aboutMe = elem.attrib['AboutMe']
+        newUser.aboutMe = elem.attrib['AboutMe'].encode("utf-8")
     if elem.attrib.has_key('Location'):
         newUser.location = elem.attrib['Location']
     if elem.attrib.has_key('WebsiteUrl'):

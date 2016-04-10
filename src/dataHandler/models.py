@@ -123,7 +123,8 @@ VOTE_TYPES = (
 @python_2_unicode_compatible
 class Vote(models.Model):
     id = models.AutoField(primary_key=True)
-    postId = models.ForeignKey(Post,on_delete=models.CASCADE)
+    # TODO: Issue #21: set blank/null/default due that
+    postId = models.ForeignKey(Post,on_delete=models.CASCADE,blank=True,null=True,default=None)
     userId = models.ForeignKey(User,blank=True,null=True,default=None)
     voteTypeId = models.IntegerField(choices=VOTE_TYPES)
     creationDate = models.DateTimeField()
