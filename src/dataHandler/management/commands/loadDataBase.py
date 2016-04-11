@@ -151,6 +151,21 @@ xmlSortOrder = {'Users.xml': 0, 'Posts.xml': 1, 'Comments.xml': 2, 'Votes.xml': 
 class Command(BaseCommand):
     help = 'Load data dump on DataBase'
 
+    # set status message
+    def setStatusMsg(self):
+        sys.stdout.write('\x1b[1A')
+        sys.stdout.flush()
+
+    # set partial progressbar
+    def setPartialProgressBar(self):
+        sys.stdout.write('\x1b[1A')
+        sys.stdout.flush()
+
+    # set total progressbar
+    def setTotalProgressBar(self):
+        sys.stdout.write('\n')
+        sys.stdout.flush()
+
     def handle(self, *args, **options):
         # TODO: Handle user inputs and load it on data structures
         folder = defaultFolder
@@ -163,7 +178,6 @@ class Command(BaseCommand):
         print 'Generating .tz files list from ' + defaultFolder
         for root,_,files in os.walk(folder):
             gen7z = (file7z for file7z in files if file7z.endswith(dataPattern))
-
             for file7z in gen7z:
                 dataPath = os.path.join(root, file7z)
 
@@ -181,24 +195,38 @@ class Command(BaseCommand):
                 notSupported = set(genXML) - set(supportedTables)
                 genXML = list(set(genXML) - notSupported)
 
-                for fileXML in sorted(genXML, key=lambda val: xmlSortOrder[val]):
-                    print 'Loading data from ' + fileXML + ' extracted from ' + root + file7z
-                    with open(os.path.join(tmpFolder, fileXML)) as f:
-                        xml = f.read()
+                # set total progress bar
+                self.setTotalProgressBar()
+                with ProgressBar(max_value=len(os.listdir(tmpFolder))) as totalProgress:
+                    progUpdt = 0;
+                    for fileXML in sorted(genXML, key=lambda val: xmlSortOrder[val]):
+                        #self.setStatusMsg()
+                        #sys.stdout.write('Loading data from ' + fileXML + ' extracted from ' + root + file7z)
+                        with open(os.path.join(tmpFolder, fileXML)) as f:
+                            xml = f.read()
 
-                    # huge_tree=True is a workaround for the bug #1285592 on lxml library
-                    parser = XMLParser(huge_tree=True)
-                    table = objectify.fromstring(xml, parser=parser)
+                        # huge_tree=True is a workaround for the bug #1285592 on lxml library
+                        parser = XMLParser(huge_tree=True)
+                        table = objectify.fromstring(xml, parser=parser)
 
-                    print 'Inserting ' + table.tag + ' from ' + fileXML
-                    elemList = table.getchildren()
-                    # progress bar initial setup
-                    with ProgressBar(max_value=len(elemList)) as progressInsert:
-                        progUpdtInsert = 0
-                        for elem in elemList:
-                            insertRow[table.tag](elem)
-                            # update and increment progress
+                        #self.setStatusMsg()
+                        #sys.stdout.write('Inserting ' + table.tag + ' from ' + fileXML)
+                        elemList = table.getchildren()
+
+                        # progress bar initial setup
+                        self.setPartialProgressBar()
+                        with ProgressBar(max_value=len(elemList)) as progressInsert:
+                            progUpdtInsert = 0
                             progressInsert.update(progUpdtInsert)
-                            progUpdtInsert += 1
-                # remove tmp folder 
-                shutil.rmtree(tmpFolder)
+                            for elem in elemList:
+                                progressInsert.update(progUpdtInsert)
+                                insertRow[table.tag](elem)
+                                # update and increment progress
+                                progUpdtInsert += 1
+
+                        # update total progress bar
+                        progUpdt += 1
+                        totalProgress.update(progUpdt)
+
+                    # remove tmp folder
+                    shutil.rmtree(tmpFolder)
