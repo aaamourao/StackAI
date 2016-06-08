@@ -1,4 +1,4 @@
 
 
 crawl:
-	scrapy runspider stack_crawler.py
+	scrapy runspider crawler.py
