@@ -75,7 +75,7 @@ class VidSpider(scrapy.Spider):
               '#question-header a::text').extract_first(),
           'Tags': resp.css('.post-taglist .post-tag::text').extract(),
           'AnswerCount': len(list(resp.css('.answer'))),
-          'CommentCount': None,
+          'CommentCount': len(list(resp.css('.question .comment-text'))),
           'FavoriteCount': None # (colected below)
         }
         aux = resp.css('.favoritecount b::text').extract_first()
