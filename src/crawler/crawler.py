@@ -68,16 +68,18 @@ class VidSpider(scrapy.Spider):
           'OwnerUserId': int((resp.css(
               '.user-details a::attr(href)').re(
                   '/users/([0-9]+)/')[:1] or [None])[0]),
-          'LastEditorUserId': None,
-          'LastEditDate': None,
-          'LastActivityDate': None,
+          'LastEditorUserId': None, # Não encontrei de onde tirar essa informação ainda
+          'LastEditDate': resp.css('.question .user-action-time a span::attr(title)').extract_first(),
+          'LastActivityDate': resp.css('.lastactivity-link::attr(title)').extract_first(),
           'Title': resp.css(
               '#question-header a::text').extract_first(),
           'Tags': resp.css('.post-taglist .post-tag::text').extract(),
           'AnswerCount': len(list(resp.css('.answer'))),
           'CommentCount': None,
-          'FavoriteCount': None
+          'FavoriteCount': None # (colected below)
         }
+        aux = resp.css('.favoritecount b::text').extract_first()
+        page['FavoriteCount'] = int(aux) if aux else None
 
         aux = resp.css('.accepted-answer::attr(data-answerid)').extract_first()
         page['AcceptedAnswerId'] = int(aux) if aux else None
