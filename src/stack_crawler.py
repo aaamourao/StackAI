@@ -56,18 +56,49 @@ class VidSpider(scrapy.Spider):
               )
 
     def parseQuestion(self, resp):
-        page = {}
-        page['url'] = resp.url
-        page['title'] = resp.css('#question-header a::text').extract_first()
-        page['up_votes'] = resp.css('#question span.vote-count-post::text').extract_first()
-        page['tags'] = resp.css('.post-taglist .post-tag::text').extract()
+        page = {
+          'url': resp.url,
+          'PostTypeId': None,
+          'AcceptedAnswerId': None,
+          'CreationDate': None, # (colected below)
+          'Score': resp.css(
+              '#question span.vote-count-post::text').extract_first(),
+          'ViewCount': None, # (colected below)
+          'Body': getInner(resp.css('.postcell div.post-text').extract_first()),
+          'OwnerUserId': int((resp.css(
+              '.user-details a::attr(href)').re(
+                  '/users/([0-9]+)/')[:1] or [None])[0]),
+          'LastEditorUserId': None,
+          'LastEditDate': None,
+          'LastActivityDate': None,
+          'Title': resp.css(
+              '#question-header a::text').extract_first(),
+          'Tags': resp.css('.post-taglist .post-tag::text').extract(),
+          'AnswerCount': None,
+          'CommentCount': None,
+          'FavoriteCount': None
+        }
 
         aux = list( resp.css('td[style] p.label-key') )
-        page['post_date'] = aux[0].css('::attr(title)').extract_first()
-        page['views'] = int((aux[1].css('b').re('b>([0-9]+) ')[:1] or [None])[0])
+        page['CreationDate'] = aux[0].css(
+            '::attr(title)').extract_first()
+        page['ViewCount'] = int((aux[1].css('b').re(
+            'b>([0-9]+) ')[:1] or [None])[0])
 
-        page['author_name'] = resp.css('.user-details a::text').extract_first()
-        page['author_rep'] = int(resp.css('.reputation-score::text').extract_first().replace(',',''))
+        page['ownerUserName'] = resp.css(
+            '.user-details a::text').extract_first()
+
+        aux = resp.css(
+            '.reputation-score::text').extract_first().replace(',','')
+        if 'k' in aux:
+            aux = aux.replace('k', '')
+            aux = float(aux)
+            aux*= 1000
+        else:
+            aux = int(aux)
+        page['authorRep'] = int(aux)
+
+
 
         # Save that page:
         self.pages.append(page)
@@ -89,7 +120,7 @@ class VidSpider(scrapy.Spider):
     def closed(self, reason):
 
         # To write utf-8 files do as described bellow:
-        with codecs.open('crawled_questions.json', 'w', 'utf-8') as file:
+        with codecs.open('data/Posts.json', 'w', 'utf-8') as file:
             text = json.dumps(
                 self.pages,
                 indent = 2,
