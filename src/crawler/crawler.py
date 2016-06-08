@@ -26,7 +26,7 @@ class VidSpider(scrapy.Spider):
     name = "videos"
     start_urls = [
         # Looking for the newest questions:
-        "http://stackoverflow.com/questions?sort=newest"
+        "http://stackoverflow.com/questions?sort=featured"#newest"
       ]
 
     pages = []
@@ -59,7 +59,7 @@ class VidSpider(scrapy.Spider):
         page = {
           'url': resp.url,
           'PostTypeId': None,
-          'AcceptedAnswerId': None,
+          'AcceptedAnswerId': None, # (colected below)
           'CreationDate': None, # (colected below)
           'Score': resp.css(
               '#question span.vote-count-post::text').extract_first(),
@@ -74,10 +74,13 @@ class VidSpider(scrapy.Spider):
           'Title': resp.css(
               '#question-header a::text').extract_first(),
           'Tags': resp.css('.post-taglist .post-tag::text').extract(),
-          'AnswerCount': None,
+          'AnswerCount': len(list(resp.css('.answer'))),
           'CommentCount': None,
           'FavoriteCount': None
         }
+
+        aux = resp.css('.accepted-answer::attr(data-answerid)').extract_first()
+        page['AcceptedAnswerId'] = int(aux) if aux else None
 
         aux = list( resp.css('td[style] p.label-key') )
         page['CreationDate'] = aux[0].css(
