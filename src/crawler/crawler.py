@@ -4,6 +4,11 @@
 # To use this project execute it with:
 # scrapy runspider stack_spider.py
 
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__)))
+
+import xmldump
+
 import scrapy
 import json
 import codecs
@@ -68,12 +73,12 @@ class VidSpider(scrapy.Spider):
           'OwnerUserId': int((resp.css(
               '.user-details a::attr(href)').re(
                   '/users/([0-9]+)/')[:1] or [None])[0]),
-          'LastEditorUserId': None, # Não encontrei de onde tirar essa informação ainda
+          'LastEditorUserId': None,
           'LastEditDate': resp.css('.question .user-action-time a span::attr(title)').extract_first(),
           'LastActivityDate': resp.css('.lastactivity-link::attr(title)').extract_first(),
           'Title': resp.css(
               '#question-header a::text').extract_first(),
-          'Tags': resp.css('.post-taglist .post-tag::text').extract(),
+          'Tags': ''.join([ '<%s>'%t for t in resp.css('.post-taglist .post-tag::text').extract() ]),
           'AnswerCount': len(list(resp.css('.answer'))),
           'CommentCount': len(list(resp.css('.question .comment-text'))),
           'FavoriteCount': None # (colected below)
@@ -125,13 +130,15 @@ class VidSpider(scrapy.Spider):
     def closed(self, reason):
 
         # To write utf-8 files do as described bellow:
-        with codecs.open('data/Posts.json', 'w', 'utf-8') as file:
-            text = json.dumps(
-                self.pages,
-                indent = 2,
-                sort_keys=True).decode('raw_unicode_escape')
-            
-            file.write(text)
+        with codecs.open('data/Posts.xml', 'w', 'utf-8') as file:
+            # text = json.dumps(
+            #     self.pages,
+            #     indent = 2,
+            #     sort_keys=True).decode('raw_unicode_escape')
+
+            header = '<?xml version="1.0" encoding="utf-8"?>\n'
+            text = xmldump.dumps({ 'row': self.pages }, 'pages', indent=2)
+            file.write(header + text)
 
 
 

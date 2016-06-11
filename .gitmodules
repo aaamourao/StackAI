@@ -1,0 +1,3 @@
+[submodule "src/crawler/xmldump"]
+	path = src/crawler/xmldump
+	url = git@github.com:VinGarcia/xmldump.git
