@@ -47,7 +47,8 @@ class User(models.Model):
     emailHash = models.CharField(max_length=200, blank=True,null=True,default=None)
     accountId = models.IntegerField(blank=True,null=True,default=None)
     def __str__(self):
-        return unicode(self).encode(encoding)
+        name = self.displayName or ""
+        return unicode("%s id=%s, rep=%s" % (name[:20], self.id, self.reputation)).encode(encoding)
 
 # Post types allowed
 POST_TYPES = (
@@ -80,7 +81,8 @@ class Post(models.Model):
     favoriteCount = models.IntegerField(blank=True,null=True,default=None)
     closedDate = models.DateTimeField(blank=True,null=True,default=None)
     def __str__(self):
-        return unicode(self).encode(encoding)
+        type = dict(POST_TYPES)[self.postTypeId]
+        return unicode("%s id=%s, title=%s" % (type, self.id, self.title)).encode(encoding)
 
 @python_2_unicode_compatible
 class Badge(models.Model):
@@ -89,7 +91,8 @@ class Badge(models.Model):
     name = models.CharField(max_length=1024)
     date = models.DateTimeField()
     def __str__(self):
-        return unicode(self).encode(encoding)
+        name = self.name or ""
+        return unicode("%s id=%s, date=%s" % (name[:20], self.id, self.date)).encode(encoding)
 
 @python_2_unicode_compatible
 class Comment(models.Model):
@@ -101,7 +104,8 @@ class Comment(models.Model):
     userId = models.ForeignKey(User,blank=True,null=True,default=None)
     userDisplayName = models.CharField(max_length=1024,blank=True,null=True,default=None)
     def __str__(self):
-        return unicode(self).encode(encoding)
+        text = self.text or ""
+        return unicode("%s id=%s, text=%s" % (self.userDisplayName, self.id, text[:20])).encode(encoding)
 
 # Vote types allowed
 VOTE_TYPES = (
@@ -130,4 +134,6 @@ class Vote(models.Model):
     creationDate = models.DateTimeField()
     BountyAmount = models.IntegerField(blank=True,null=True,default=None)
     def __str__(self):
-        return unicode(self).encode(encoding)
+        type = dict(VOTE_TYPES)[self.voteTypeId]
+        postId = self.postId.id if self.postId else None
+        return unicode("%s id=%s, postId=%s" % (type, self.id, postId)).encode(encoding)
