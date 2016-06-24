@@ -13,3 +13,4 @@ progressbar2==3.6.2
 psycopg2==2.6.1
 pyunpack==0.1
 static3==0.6.1
+https://pypi.python.org/packages/3e/f5/aad82824b369332a676a90a8c0d1e608b17e740bbb6aeeebca726f17b902/python-dateutil-2.5.3.tar.gz#md5=05ffc6d2cc85a7fd93bb245807f715ef

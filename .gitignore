@@ -7,4 +7,5 @@ database.cnf
 *.7z
 *.swo
 *.xml
+*.csv
 src/tmp/
