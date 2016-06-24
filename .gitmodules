@@ -1,3 +1,6 @@
 [submodule "src/crawler/xmldump"]
 	path = crawler-src/xmldump
 	url = git@github.com:VinGarcia/xmldump.git
+[submodule "visualization-src/graph-git"]
+	path = visualization-src/graph-git
+	url = git@git.luar.dcc.ufmg.br:meningitis/meningite-visualizacao.git
