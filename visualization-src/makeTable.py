@@ -1,25 +1,55 @@
 #!/usr/bin/env python2
 
-from userTable import UserTable, tags_re
+from tags import Tags
+from stack_tools import tags_re
+from userTable import UserTable
+from postTable import PostTable
+from learn import Learn
 
-if __name__ == '__main__':
-  user_t = UserTable('../stackexchange')
+from collections import Counter
+
+def makeTable():
+  post_t = PostTable('../stackexchange')
+  user_t = UserTable('../stackexchange', post_t)
 
   table = []
+  # Normalize some columns and remove some lines:
   for idx, line in enumerate(user_t.table):
-    if line['tags'] != "":
+    # Ignore users with no tags attached to it:
+    if len(line['tags']) != 0 and line['num_posts'] > 0:
       table.append(line)
-  user_t.table = table
+      # Normalize some values according to the number of posts:
+      for key in line:
+        if key not in ['badges', 'tags', 'id', 'account_age', 'num_posts']:
+          line[key] = float(line[key]) / line['num_posts']
 
+  print("Table len", len(table))
+
+  # Collect information about all the tags
+  # and remove lines with too uncommon tags
+  # from the table
+  tags = Tags(
+      table, min_count=20,
+      ban_tags=['identification-request'], filter=True)
+
+  post_t.table, _ = tags.filterTable(table=post_t.table)
+
+  tags.saveTags('all_tags.csv', save_counts=False)
+
+  print("Tags len:", len(tags.count))
+
+  badges = Tags(tags.table, col='badges')
+  badges.saveTags('all_badges.csv', save_counts=False)
+
+  print("Badges len:", len(badges.count))
+
+  print("Filtered table len", len(tags.table))
+  user_t.loadTable(table=tags.table)
   user_t.saveTable('full_table.csv')
+  post_t.saveTable('Posts.csv')
 
-  # collect all tag names:
-  print "table len", len(user_t.table)
-  tags = set()
-  for line in user_t.table:
-    tags = tags.union(line['tags'].split(','))
-  tags.discard("")
+  return Learn(user_t, post_t, tags)
 
-  print "tags len", len(tags)
-  with open('full_categories.csv', 'w') as file:
-    file.write( '\t'.join(tags) )
+if __name__ == '__main__':
+  makeTable()
+

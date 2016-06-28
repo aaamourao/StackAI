@@ -1,27 +1,28 @@
 import os
-import re
 
 from dateutil.parser import parse
 from csv import DictWriter, DictReader
-from stack_tools import readRows, post_types, vote_types, latest_dump_date
 
-tags_re = re.compile('<([^>]+)>')
+from postTable import PostTable
+from stack_tools import readRows, latest_dump_date, tags_re
 
 class UserTable():
 
-  def __init__(self, xmldir):
+  def __init__(self, xmldir, post_t=None):
 
     self.xmldir = xmldir
     self.table = []
     self.id_table = {}
     self.tags = set()
 
+    if post_t:
+      self.post_t = post_t
+    else:
+      self.post_t = PostTable(xmldir)
+
     self.buildTable()
     self.parseFeatures()
-
-    # Remove redundant tags from each user:
-    for line in self.table:
-      line['tags'] = ','.join( set( tags_re.findall( line['tags'] ) ) )
+    self.max_vec = self.buildMaxVec()
     
   def buildTable(self):
     xml_addr = os.path.join(self.xmldir, 'Users.xml')
@@ -29,15 +30,16 @@ class UserTable():
     for row in readRows(xml_addr):
       line = {
         'id': row.get('Id'),
-        'rep': row.get('Reputation'),
+        'rep': int(row.get('Reputation')),
         'account_age': (latest_dump_date-parse(row.get('CreationDate'))).days / 365.2425,
         'num_posts': 0,
-        'num_comments': 0,
-        'num_upvotes': row.get('UpVotes'),
-        'num_downvotes': row.get('DownVotes'),
-        'num_upvoted': 0,
-        'num_downvoted': 0,
-        'tags': ""
+        'num_comments': 0.,
+        'num_upvotes': float(row.get('UpVotes')),
+        'num_downvotes': float(row.get('DownVotes')),
+        'num_upvoted': 0.,
+        'num_downvoted': 0.,
+        'tags': [],
+        'badges': []
       }
       self.table.append(line)
       self.id_table[ line['id'] ] = line
@@ -54,6 +56,15 @@ class UserTable():
 
       if owner_id:
         self.id_table[owner_id]['num_comments'] += 1
+
+    # Badge features:
+    xml_addr = os.path.join(self.xmldir, 'Badges.xml')
+    for row in readRows(xml_addr):
+      owner_id = row.get('UserId')
+      name = row.get('Name')
+
+      if owner_id and name:
+        self.id_table[owner_id]['badges'].append(name)
 
     # Votes features:
     xml_addr = os.path.join(self.xmldir, 'Votes.xml')
@@ -87,24 +98,80 @@ class UserTable():
           self.id_table[owner_id]['num_upvoted'] += votes_per_post[post_id]['up']
           self.id_table[owner_id]['num_downvoted'] += votes_per_post[post_id]['down']
 
-        tags = row.get('Tags')
-        if tags:
-          self.id_table[owner_id]['tags'] += tags
+    for line in self.post_t.table:
+      for uid in line['users']:
+        self.id_table[uid]['tags'].extend( line['tags'] )
 
   csvheader = [
     'id', 'rep', 'account_age', 'num_posts',
     'num_comments', 'num_upvotes', 'num_downvotes',
-    'num_upvoted', 'num_downvoted', 'tags' ]
+    'num_upvoted', 'num_downvoted', 'tags', 'badges' ]
   def saveTable(self, addr):
     with open(addr, 'w') as file:
-      my_dict = { 'a':10, 'b':5, 'c': 8 }
       w = DictWriter(file, self.csvheader, delimiter='\t')
       w.writeheader()
       w.writerows(self.table)
 
-  def loadTable(self, addr):
-    with open('test.csv') as file:
-      table = list(DictReader(file, delimiter='\t'))
+  def loadTable(self, addr=None, table=None):
+    if addr:
+      with open('test.csv') as file:
+        table = list(DictReader(file, delimiter='\t'))
+        self.table = table
+    elif table:
       self.table = table
-      return table
+
+    self.max_vec = self.buildMaxVec()
+
+    return table
+
+  relative_keys = [
+    'rep', 'account_age', 'num_posts', 'num_comments' ]
+  profile_keys = [
+    'num_upvotes', 'num_downvotes', 'num_upvoted', 'num_downvoted' ]
+  # Return a list with values between 0 and 1 describing the user
+  def makeFeatureVector(self, user):
+    # Get the distribution of the profile features from the user:
+    total = 0
+    profile = []
+    for key in self.profile_keys:
+      total += user[key]
+      profile.append( user[key] )
+
+    # Check to avoid division for 0:
+    if total != 0:
+      profile = [ k/total for k in profile ]
+
+    # Get the fraction in relation to other users of the relative keys:
+    relation = []
+    max_vec = self.max_vec
+    for key in self.relative_keys:
+      value = user[key] / max_vec[key]
+      relation.append( value )
+
+    return [ profile, relation ]
+
+  def buildMaxVec(self):
+    max_vec = {
+      'rep': 0. , 'account_age': 0.,
+      'num_posts': 0., 'num_comments': 0.
+    }
+    
+    for line in self.table:
+      for key in max_vec:
+        max_vec[key] = max( max_vec[key], float(line[key]) )
+
+    return max_vec
+
+    
+    
+
+
+
+
+
+
+
+
+
+
     
