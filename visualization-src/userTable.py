@@ -148,7 +148,7 @@ class UserTable():
       value = user[key] / max_vec[key]
       relation.append( value )
 
-    return [ profile, relation ]
+    return profile + relation
 
   def buildMaxVec(self):
     max_vec = {

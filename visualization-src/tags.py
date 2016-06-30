@@ -92,7 +92,7 @@ class Tags():
   # Return a binary list X where Xi indicates the presence
   # or abscence of the tag i on tags_list
   def makeBinaryVector(self, tags_list):
-    print(tags_list)
+    #print(tags_list)
     return [ int(k in tags_list) for k in self.count ]
 
 

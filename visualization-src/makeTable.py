@@ -50,6 +50,30 @@ def makeTable():
 
   return Learn(user_t, post_t, tags)
 
+def main():
+
+  print("Building table...")
+  l = makeTable()
+
+  print("Training Neural Network...")
+  l.train()
+
+  print("\nTesting 50% match vs 50% random:")
+  l.test(10000)
+
+  print("\nTesting 100% random:")
+  l.test(10000, match=False)
+
+  print("")
+
+  return l
+
 if __name__ == '__main__':
-  makeTable()
+  main()
+
+
+
+
+
+
 
