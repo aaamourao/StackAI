@@ -7,7 +7,6 @@
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 
-import xmldump
 from lxml import etree
 
 import scrapy
@@ -21,7 +20,7 @@ from functools import partial
 from os.path import isfile, isdir, splitext, dirname, exists, basename
 from os import makedirs, listdir, rmdir
 
-MAX_QUESTIONS=100
+MAX_QUESTIONS=0
 
 innerHtml = re.compile('\A<[^>]*>(.*)</[^>]*>\Z', re.DOTALL)
 def getInner(html):
@@ -31,15 +30,23 @@ def xmlSet(xml, attr, value):
   if type(value) == unicode or type(value) == str:
     xml.set(attr, value)
 
+uid_re = re.compile("users/([0-9]+)/[^/]+\Z")
+
 class VidSpider(scrapy.Spider):
     # Required attributes:
     name = "videos"
     start_urls = [
         # Looking for the newest questions:
-        "http://stackoverflow.com/questions?sort=featured"#newest"
+        "http://stackoverflow.com/questions?sort=featured",#newest"
       ]
 
+    users_url = [
+        "http://stackoverflow.com/users/5228806/ffxsam",
+        "http://stackoverflow.com/users/3918736/sebnorth"
+    ]
+
     posts = etree.Element('posts')
+    users = etree.Element('users')
 
     # Pre-load some files/data:
     def __init__(self):
@@ -64,6 +71,28 @@ class VidSpider(scrapy.Spider):
                 resp.urljoin(link),
                 callback=partial(self.parseQuestion)
               )
+
+        for link in self.users_url:
+            # Schedule it to be parsed:
+            yield scrapy.Request(
+                link+"?tab=tags", callback=partial(self.parseUser)
+              )
+
+    def parseUser(self, resp):
+        user = etree.Element('row')
+
+        xmlSet(user, 'Id', uid_re.findall(resp.url)[0])
+        xmlSet(user, 'Name', resp.css("div.name::text").extract_first().strip())
+
+        tags = ""
+        for sel in resp.css(".user-tags td"):
+            tag_name = sel.css("a.post-tag::text").extract_first()
+            tag_count = sel.css(".item-multiplier-count::text").extract_first() or 1
+            tags += (("<%s>" % tag_name) * int(tag_count))
+        xmlSet(user, 'Tags', tags)
+
+        # Save that post:
+        self.users.append(user)
 
     def parseQuestion(self, resp):
         post = etree.Element('row')
@@ -143,6 +172,10 @@ class VidSpider(scrapy.Spider):
             # text = xmldump.dumps({ 'row': self.pages }, 'pages', indent=2)
             # file.write(header + text)
 
+        with open('data/Users.xml', 'w') as file:
+            xml_text = etree.tostring(
+              self.users, encoding='utf-8', pretty_print=True, xml_declaration=True)
+            file.write(xml_text)
 
 
 
