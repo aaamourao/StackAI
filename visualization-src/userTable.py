@@ -23,6 +23,7 @@ class UserTable():
     self.buildTable()
     self.parseFeatures()
     self.max_vec = self.buildMaxVec()
+    self.ndim = len( self.relative_keys ) + len( self.profile_keys )
     
   def buildTable(self):
     xml_addr = os.path.join(self.xmldir, 'Users.xml')

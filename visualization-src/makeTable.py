@@ -1,36 +1,138 @@
 #!/usr/bin/env python2
 
+import os
+import pickle
+from matplotlib import pyplot as plt
+from collections import Counter
+from os.path import isfile, join
+from time import clock
+
 from tags import Tags
 from stack_tools import tags_re
 from userTable import UserTable
 from postTable import PostTable
-from learn import Learn
+from features import Features
 
-from collections import Counter
+from mlp import Mlp
+from softmax import Softmax
+from svm import Svm
 
-def makeTable():
-  post_t = PostTable('../stackexchange')
-  user_t = UserTable('../stackexchange', post_t)
+from numpy import mean
 
-  table = []
-  # Normalize some columns and remove some lines:
-  for idx, line in enumerate(user_t.table):
-    # Ignore users with no tags attached to it:
-    if len(line['tags']) != 0 and line['num_posts'] > 0:
-      table.append(line)
-      # Normalize some values according to the number of posts:
-      for key in line:
-        if key not in ['badges', 'tags', 'id', 'account_age', 'num_posts']:
-          line[key] = float(line[key]) / line['num_posts']
+def saveFile(item, path, name):
+  addr = join(path, name)
+  with open(addr, 'wb') as file:
+    file.write(pickle.dumps(item, 2))
 
-  print("Table len", len(table))
+def buildGraph(tags, uncommon_min):
+  mc = tags.count.most_common()
+  graph = [ y[1] for y in mc ]
+  ntags = len(graph)
+  total = sum(graph)
+  filtered=list(y for y in graph if y >= uncommon_min)
+  remain = ntags - len( filtered )
+  loss = total - sum( filtered )
+  plt.bar(
+    range(ntags), graph, 1,
+    label="Tag Count",
+    edgecolor="b",
+    color='b')
+  for idx, val in enumerate(graph):
+    if val < uncommon_min:
+      break
+  plt.bar(
+    [idx], graph[idx], 1,
+    color='r')
+  plt.plot(
+    [uncommon_min] * ntags,
+    linewidth=2, label="Cut Threshold",
+    color='r')
+  plt.xlabel('Tags')
+  plt.ylabel('N° Ocurrencies')
+  plt.legend()
 
-  # Collect information about all the tags
-  # and remove lines with too uncommon tags
-  # from the table
-  tags = Tags(
-      table, min_count=20,
-      ban_tags=['identification-request'], filter=True)
+  text = ('Cut threshold: %d\n' % int(uncommon_min))
+  text += ('Data Loss: %.1f%%\n' % (100.*loss/total) )
+  text += ('Tag Reduction: %.1f%%' %
+    (100.*remain/ntags))
+  plt.text(len(graph)*.35, max(graph)*.45/4, text,
+    fontsize=18, color='green', ha='center',
+    style='oblique')
+
+  x1,x2,y1,y2 = plt.axis()
+  plt.axis((x1,x2,y1/4,y2/4))
+  plt.savefig('count.png')
+
+def makeTable(
+  path='../stackexchange',
+  refresh=False,
+  uncommon_min=None):
+  source_files = {
+    'user': join(path, 'user.p'),
+    'post': join(path, 'post.p'),
+    'tags': join(path, 'tags.p'),
+    'mlp': join(path, 'mlp.p'),
+    'svm': join(path, 'svm.p'),
+    'perceptron': join(path, 'perceptron.p')
+  }
+
+  for key, val in source_files.items():
+    if key in ['user', 'post', 'tags'] and not isfile(val):
+      refresh = True
+  
+  if refresh:
+    print("Collecting data from XML files...")
+    post_t = PostTable(path)
+    user_t = UserTable(path, post_t)
+
+    table = []
+    # Normalize some columns and remove some lines:
+    for idx, line in enumerate(user_t.table):
+      # Ignore users with no tags attached to it:
+      if len(line['tags']) != 0 and line['num_posts'] > 0:
+        table.append(line)
+        # Normalize some values according to the number of posts:
+        for key in line:
+          if key not in ['badges', 'tags', 'id', 'account_age', 'num_posts']:
+            line[key] = float(line[key]) / line['num_posts']
+
+    print("Table len", len(table))
+
+    # Collect information about all the tags
+    # and remove lines with too uncommon tags
+    # from the table
+    tags = Tags(
+        table, min_count=20,
+        ban_tags=['identification-request'], filter=True)
+
+    # Save the files:
+    with open(source_files['user'], 'wb') as file:
+      file.write(pickle.dumps(user_t, 2))
+    with open(source_files['post'], 'wb') as file:
+      file.write(pickle.dumps(post_t, 2))
+    with open(source_files['tags'], 'wb') as file:
+      file.write(pickle.dumps(tags, 2))
+  else:
+    print("Loading data from pickle files...")
+    # Load the files:
+    with open(source_files['user'], 'rb') as file:
+      user_t = pickle.load(file)
+    with open(source_files['post'], 'rb') as file:
+      post_t = pickle.load(file)
+    with open(source_files['tags'], 'rb') as file:
+      tags = pickle.load(file)
+
+  if uncommon_min == None:
+    uncommon_min = mean(list(tags.count.values()))*.8
+
+  print("Cut threshold: %d" % int(uncommon_min))
+
+  print("Building tags graph...")
+  buildGraph(tags, uncommon_min)
+
+  print("Dropping uncommon tags...")
+  tags.dropUncommon(uncommon_min)
+  tags.filterSelf()
 
   post_t.table, _ = tags.filterTable(table=post_t.table)
 
@@ -48,25 +150,39 @@ def makeTable():
   user_t.saveTable('full_table.csv')
   post_t.saveTable('Posts.csv')
 
-  return Learn(user_t, post_t, tags)
+  return Features(user_t, post_t, tags)
 
 def main():
 
-  print("Building table...")
-  l = makeTable()
+  #path = '../stackexchange'
+  path = '/home/fox/adados/superuser_data'
 
-  print("Training Neural Network...")
-  l.train()
+  # Loading data:
+  features = makeTable(path)
 
+  print("Training MLP...")
+  start = clock()
+  net = Svm(features, train_size=1000)
+  #net = Softmax(features, train_size=1000)
+  #net = Mlp(features, train_size=1000)
+  saveFile(net, path, 'svm.p')
+  print("Time: %.1fmin"%((clock()-start)/60))
+
+  start = clock()
   print("\nTesting 50% match vs 50% random:")
-  l.test(10000)
+  net.test(5000)
+  print("Time: %ds" %(clock()-start))
 
+  start = clock()
   print("\nTesting 100% random:")
-  l.test(10000, match=False)
+  net.test(5000, match=False)
+  print("Time: %ds" %(clock()-start))
+
+  plt.show()
 
   print("")
 
-  return l
+  return net
 
 if __name__ == '__main__':
   main()

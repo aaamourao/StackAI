@@ -1,16 +1,15 @@
 from random import randint
 from numpy import array
 
-from sknn.mlp import Classifier, Layer
-
 # For python3 compatibility
 if 'xrange' not in globals():
   xrange = range
 
-class Learn():
+# Join the tables from users, posts and tags
+# to built feature tables.
+class Features():
+  ndim = 0
 
-  tags_header = None
-  
   # @args:
   # - users should be a UserTable instance
   # - posts should be a PostTable instance
@@ -19,9 +18,9 @@ class Learn():
     self.users = users
     self.posts = posts
     self.tags = tags
-    self.tags_header = tags.getTags()
+    self.ndim = tags.ndim*2 + users.ndim + 1
 
-  def genData(self, size=None, match=None):
+  def generate(self, size=None, match=None):
     if not size:
       size = len(self.posts.table)
 
@@ -34,59 +33,29 @@ class Learn():
 
     return array(y_train), array(x_train)
 
-  def train(self, train_size=None):
-    y_train, x_train = self.genData(train_size)
-
-    self.net = Classifier(
-      layers=[
-        Layer("Sigmoid", units=100),
-        Layer("Softmax")],
-      learning_rate=0.001,
-      n_iter=25)
-    
-    self.net.fit(x_train, y_train)
-
-  def test(self, test_size=100, match=None):
-    y_test, x_test = self.genData(test_size, match)
-
-    true_p = 0.; true_n = 0.; fake_p = 0.; fake_n = 0.
-    for guess, y in zip(self.net.predict(x_test), y_test):
-      if guess == 1 and y == 1:
-        true_p += 1
-      if guess == 1 and y == 0:
-        fake_p += 1
-      if guess == 0 and y == 0:
-        true_n += 1
-      if guess == 0 and y == 1:
-        fake_n += 1
-
-    true_p /= test_size
-    fake_p /= test_size
-    true_n /= test_size
-    fake_n /= test_size
-
-    print("""
-     \ttrue\tfalse
-    p\t%s\t%s
-    n\t%s\t%s
-    """ % (true_p, fake_p, true_n, fake_n))
-
-    print("Precision: %s" % ((true_p / (true_p+fake_p)) if true_p else 0) )
-    print("Recall: %s" % ((true_p / (true_p+fake_n)) if true_p else 0) )
-
   def makeFeatureVectorPair(self, match=None):
     p_len = len(self.posts.table)
     u_len = len(self.users.table)
     
     if match == None:
       match = randint(0,1)
+    user = None
+    count = 0
 
     # Choose a matching pair with 50% change:
     if match:
-      post = self.posts.table[ randint(0, p_len-1) ]
-      pu_len = len(post['users'])
-      user_id = post['users'][randint(0, pu_len-1)]
-      user = self.users.id_table[user_id]
+      while not user:
+        if count == 100:
+          raise Exception("Exceeded the maximum lookups for post/user pair!")
+        else:
+          count += 1
+
+        post = self.posts.table[ randint(0, p_len-1) ]
+        pu_len = len(post['users'])
+        # Check if ths post was anonimous:
+        if pu_len > 0:
+          user_id = post['users'][randint(0, pu_len-1)]
+          user = self.users.id_table[user_id]
     else:
     # Choose a pair randomly
       post = self.posts.table[ randint(0, p_len-1) ]

@@ -3,6 +3,7 @@ from collections import Counter
 class Tags():
   count = None
   table = None
+  ndim = 0
 
   _delim = None
   _col = None
@@ -15,13 +16,17 @@ class Tags():
     for line in table:
       count.update(line[col])
     del count[""]
+    for tag in ban_tags:
+      del count[tag]
 
     self.count = count
 
     self.dropUncommon(min_count)
 
     if filter:
-      self.table, self.count = self.filterTable()
+      self.filterSelf()
+
+    self.ndim = len(self.count)
 
   def dropUncommon(self, min_count=0):
     if min_count == 0:
@@ -34,9 +39,14 @@ class Tags():
     })
 
     self.count = count
+    self.ndim = len(self.count)
 
   def getTags(self):
     return self.count.keys()
+
+  def filterSelf(self):
+    self.table, self.count = self.filterTable()
+    self.ndim = len(self.count)
 
   def filterTable(self, table=None):
     table = table if table else self.table
@@ -80,6 +90,7 @@ class Tags():
         count = Counter(tags)
 
     self.count = count
+    self.ndim = len(self.count)
 
   # Return a vector with sum == 1 indicating the tag distribution of a user
   def makeFeatureVector(self, tags_list):
@@ -92,7 +103,6 @@ class Tags():
   # Return a binary list X where Xi indicates the presence
   # or abscence of the tag i on tags_list
   def makeBinaryVector(self, tags_list):
-    #print(tags_list)
     return [ int(k in tags_list) for k in self.count ]
 
 
