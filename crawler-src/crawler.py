@@ -8,6 +8,7 @@ import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 
 import xmldump
+from lxml import etree
 
 import scrapy
 import json
@@ -20,11 +21,15 @@ from functools import partial
 from os.path import isfile, isdir, splitext, dirname, exists, basename
 from os import makedirs, listdir, rmdir
 
-MAX_QUESTIONS=10
+MAX_QUESTIONS=100
 
 innerHtml = re.compile('\A<[^>]*>(.*)</[^>]*>\Z', re.DOTALL)
 def getInner(html):
     return innerHtml.match(html).group(1)
+
+def xmlSet(xml, attr, value):
+  if type(value) == unicode or type(value) == str:
+    xml.set(attr, value)
 
 class VidSpider(scrapy.Spider):
     # Required attributes:
@@ -34,7 +39,7 @@ class VidSpider(scrapy.Spider):
         "http://stackoverflow.com/questions?sort=featured"#newest"
       ]
 
-    pages = []
+    posts = etree.Element('posts')
 
     # Pre-load some files/data:
     def __init__(self):
@@ -49,7 +54,7 @@ class VidSpider(scrapy.Spider):
     def parse(self, resp):
 
         for link in resp.css('#mainbar a.question-hyperlink::attr(href)').extract():
-            if self.count == 10:
+            if self.count == MAX_QUESTIONS:
                 break
             else:
                 self.count += 1
@@ -61,42 +66,36 @@ class VidSpider(scrapy.Spider):
               )
 
     def parseQuestion(self, resp):
-        page = {
-          'url': resp.url,
-          'PostTypeId': None,
-          'AcceptedAnswerId': None, # (colected below)
-          'CreationDate': None, # (colected below)
-          'Score': resp.css(
-              '#question span.vote-count-post::text').extract_first(),
-          'ViewCount': None, # (colected below)
-          'Body': getInner(resp.css('.postcell div.post-text').extract_first()),
-          'OwnerUserId': int((resp.css(
-              '.user-details a::attr(href)').re(
-                  '/users/([0-9]+)/')[:1] or [None])[0]),
-          'LastEditorUserId': None,
-          'LastEditDate': resp.css('.question .user-action-time a span::attr(title)').extract_first(),
-          'LastActivityDate': resp.css('.lastactivity-link::attr(title)').extract_first(),
-          'Title': resp.css(
-              '#question-header a::text').extract_first(),
-          'Tags': ''.join([ '<%s>'%t for t in resp.css('.post-taglist .post-tag::text').extract() ]),
-          'AnswerCount': len(list(resp.css('.answer'))),
-          'CommentCount': len(list(resp.css('.question .comment-text'))),
-          'FavoriteCount': None # (colected below)
-        }
-        aux = resp.css('.favoritecount b::text').extract_first()
-        page['FavoriteCount'] = int(aux) if aux else None
+        post = etree.Element('row')
 
-        aux = resp.css('.accepted-answer::attr(data-answerid)').extract_first()
-        page['AcceptedAnswerId'] = int(aux) if aux else None
+        xmlSet(post, 'url', resp.url)
+        xmlSet(post, 'PostTypeId', "1")
+        xmlSet(post, 'AcceptedAnswerId',
+          resp.css('.accepted-answer::attr(data-answerid)').extract_first())
 
         aux = list( resp.css('td[style] p.label-key') )
-        page['CreationDate'] = aux[0].css(
-            '::attr(title)').extract_first()
-        page['ViewCount'] = int((aux[1].css('b').re(
-            'b>([0-9]+) ')[:1] or [None])[0])
+        xmlSet(post, 'CreationDate', aux[0].css('::attr(title)').extract_first())
+        xmlSet(post, 'ViewCount', (aux[1].css('b').re('b>([0-9]+) ')[:1] or [None])[0])
 
-        page['ownerUserName'] = resp.css(
-            '.user-details a::text').extract_first()
+        xmlSet(post, 'Score', resp.css( '#question span.vote-count-post::text').extract_first())
+        xmlSet(post, 'Body', getInner(resp.css('.postcell div.post-text').extract_first()))
+
+        xmlSet(post, 'OwnerUserId', (resp.css(
+            '.user-details a::attr(href)').re(
+                '/users/([0-9]+)/')[:1] or [None])[0])
+
+        #xmlSet(post, 'LastEditorUserId', None)
+        xmlSet(post, 'LastEditDate', resp.css('.question .user-action-time a span::attr(title)').extract_first())
+        xmlSet(post, 'LastActivityDate', resp.css('.lastactivity-link::attr(title)').extract_first())
+        xmlSet(post, 'Title', resp.css('#question-header a::text').extract_first())
+        xmlSet(post, 'Tags', ''.join([ '<%s>'%t for t in resp.css('.post-taglist .post-tag::text').extract() ]))
+        xmlSet(post, 'AnswerCount', str(len(list(resp.css('.answer')))))
+        xmlSet(post, 'CommentCount', str(len(list(resp.css('.question .comment-text')))))
+        xmlSet(post, 'FavoriteCount', resp.css('.favoritecount b::text').extract_first())
+
+        # The attributes below are not required by the neural network,
+        # So they are of less importance:
+        xmlSet(post, 'ownerUserName', resp.css( '.user-details a::text').extract_first())
 
         aux = resp.css(
             '.reputation-score::text').extract_first().replace(',','')
@@ -106,12 +105,10 @@ class VidSpider(scrapy.Spider):
             aux*= 1000
         else:
             aux = int(aux)
-        page['authorRep'] = int(aux)
+        xmlSet(post, 'authorRep', str(int(aux)))
 
-
-
-        # Save that page:
-        self.pages.append(page)
+        # Save that post:
+        self.posts.append(post)
 
     # To download data be it a image, video or an
     # html page, just Request it and set download
@@ -130,15 +127,21 @@ class VidSpider(scrapy.Spider):
     def closed(self, reason):
 
         # To write utf-8 files do as described bellow:
-        with codecs.open('data/Posts.xml', 'w', 'utf-8') as file:
+        #with codecs.open('data/Posts.xml', 'w', 'utf-8') as file:
+        with open('data/Posts.xml', 'w') as file:
             # text = json.dumps(
             #     self.pages,
             #     indent = 2,
             #     sort_keys=True).decode('raw_unicode_escape')
 
-            header = '<?xml version="1.0" encoding="utf-8"?>\n'
-            text = xmldump.dumps({ 'row': self.pages }, 'pages', indent=2)
-            file.write(header + text)
+            xml_text = etree.tostring(
+              self.posts, encoding='utf-8', pretty_print=True, xml_declaration=True)
+            file.write(xml_text)
+
+            # Using xmldump:
+            # header = '<?xml version="1.0" encoding="utf-8"?>\n'
+            # text = xmldump.dumps({ 'row': self.pages }, 'pages', indent=2)
+            # file.write(header + text)
 
 
 
