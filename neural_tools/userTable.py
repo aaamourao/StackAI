@@ -1,10 +1,11 @@
 import os
 
+from datetime import datetime, timezone
 from dateutil.parser import parse
 from csv import DictWriter, DictReader
 
-from postTable import PostTable
-from stack_tools import readRows, latest_dump_date, tags_re
+from .postTable import PostTable
+from .stack_tools import readRows, latest_dump_date, tags_re
 
 class UserTable():
 
@@ -123,6 +124,36 @@ class UserTable():
 
     self.max_vec = self.buildMaxVec()
 
+    return table
+
+  def loadCrawledUsers(self, xml_addr):
+    table = []
+    
+    for row in readRows(xml_addr):
+      user = {}
+
+      user['rep'] = row.get('Reputation')
+      user['account_age'] = (datetime.now(timezone.utc)-parse(row.get('CreationDate'))).days / 365.2425
+      user['num_posts'] = row.get('NumPosts')
+      user['num_comments'] = row.get('NumComments')
+      user['num_upvotes'] = row.get('UpVotes')
+      user['num_downvotes'] = row.get('DownVotes')
+      user['num_upvoted'] = row.get('UpVoted')
+      user['num_downvoted'] = row.get('DownVoted')
+      user['tags'] = tags_re.findall(row.get('Tags'))
+
+      # Divide some values for the number of posts:
+      num_posts = int(user['num_posts'])
+      for key in self.profile_keys+['num_comments']:
+        user[key] = float(user[key]) / num_posts
+
+      # Make sure nothing is bigger than the max
+      # value gathered from training:
+      for key in self.relative_keys:
+        user[key] = min(
+          float(user[key]), self.max_vec[key])
+      
+      table.append(user)
     return table
 
   relative_keys = [

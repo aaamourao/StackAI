@@ -20,7 +20,7 @@ class Features():
     self.tags = tags
     self.ndim = tags.ndim*2 + users.ndim + 1
 
-  def generate(self, size=None, match=None):
+  def generate(self, size=None, match=None, no_class=False):
     if not size:
       size = len(self.posts.table)
 
@@ -31,7 +31,10 @@ class Features():
       y_train.append(y)
       x_train.append(x)
 
-    return array(y_train), array(x_train)
+    if no_class:
+      return array(x_train)
+    else:
+      return array(y_train), array(x_train)
 
   def makeFeatureVectorPair(self, match=None):
     p_len = len(self.posts.table)
@@ -80,6 +83,14 @@ class Features():
     f_vec += self.users.makeFeatureVector(user)
 
     return f_vec
+
+  def makeUserFeatureTable(self, user):
+
+    table = []
+    for post in self.posts.table:
+      table.append( self.makeFeatureVector(user, post) )
+    
+    return array(table)
 
   # Calculate a factor between 0 and 1 indicating the direct
   # correlation between the user tags and the post tags.

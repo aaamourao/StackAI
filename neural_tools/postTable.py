@@ -1,13 +1,13 @@
 
 import os
 
-from stack_tools import readRows, tags_re
+from .stack_tools import readRows, tags_re
 from csv import DictWriter, DictReader
 
 class PostTable():
   table = None
 
-  def __init__(self, dir_addr):
+  def __init__(self, dir_addr, saveUrl=False):
     table = []
     id_table = {}
     
@@ -43,6 +43,8 @@ class PostTable():
         line['users'].extend(users)
         line['tags'] = tags_re.findall(row.get('Tags'))
         line['neg_score'] = (int( row.get('Score') ) < 0)
+        if saveUrl:
+          line['url'] = row.get('url')
       elif p_type == "2":
         line['users'].extend(users)
 
