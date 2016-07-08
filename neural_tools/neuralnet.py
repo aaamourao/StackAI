@@ -52,19 +52,16 @@ class NeuralNet():
   def predict(self, x_test):
     return self.net.predict(x_test)
 
-  def test(self, test_size=100, chunk_size=None, match=None):
-
-    if chunk_size == None:
-      chunk_size = test_size
+  def test(self, test_size=100, chunk_size=1000, match=None):
 
     chunks = test_size // chunk_size
+    true_p = 0.;true_n = 0.;fake_p = 0.;fake_n = 0.
 
-    for chunk in range(chunks):
+    for chunk in range(1, chunks+1):
       yt,xt=self.features.generate(chunk_size,match)
 
       print('Chunk %s/%s...' % (chunk, chunks))
 
-      true_p = 0.;true_n = 0.;fake_p = 0.;fake_n = 0.
       for guess, y in zip(self.predict(xt), yt):
         if guess >= .5 and y >= .5:
           true_p += 1
@@ -76,6 +73,7 @@ class NeuralNet():
           fake_n += 1
     print('last guess/class:', guess, '/', y)
 
+    test_size = chunks * chunk_size
     true_p *= 100/test_size
     fake_p *= 100/test_size
     true_n *= 100/test_size
