@@ -63,28 +63,30 @@ def callback():
   y_values = svm.predict(f_table)
 
   print("Sorting results...")
-  posts = [ p['url'] for p in post_t.table ]
+  print(post_t.table[0])
+  posts = [ (p['url'], p['title']) for p in post_t.table ]
   suggestions = sorted(
     zip(posts, y_values), key=lambda x : -x[1])
 
-  #print("Results:", suggestions)
-  return [ x[0] for x in suggestions ]
+  return suggestions
 
 def postList(request, uid):
   urls = []
   def response():
     r = callback()
-    print('callback:', r)
+    print("Return from callback")
     urls.extend(r)
 
-  print("Starting Crawler...")
+  print("Starting Crawler... UID: %s" % uid)
+  cmdline = ("scrapy runspider crawler/crawlUser.py -a uid=%s" % uid)
+  print("cmdline: %s" % cmdline)
   thread = popenAndCall(response,
-      ("scrapy runspider crawler/crawler.py -a uid=%s -a refreshQuestions=False" % uid).split()
+      cmdline.split()
     )
   thread.join(10)
 
-  urls = [ ('<a href=%s>%s</a>' % (url,url)) for url in urls ]
-  print('callback urls:', urls)
+  urls = [ ('%s: <a href=%s>%s</a> %.1f%%' % (idx,p[0],p[1][:40],score*100)) for idx, (p,score) in enumerate(urls[:15]+urls[-15:]) ]
+  #print('callback urls:', urls)
 
   resp = '<br>'.join(urls)
   return HttpResponse(

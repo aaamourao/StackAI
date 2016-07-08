@@ -154,9 +154,14 @@ def main():
   # Loading data:
   features = makeTable(path)
 
+
   print("Training MLP...")
   start = clock()
-  net = Svm(features, 100000, 1000)
+
+  with open(path+'/svm.p', 'rb') as file:
+    net = pickle.load(file)
+    net = Svm(features, net=net)
+  #net = Svm(features, 400000, 1000)
   #net = Softmax(features, 2000, 500)
   #net = Mlp(features, 2000, 500)
   saveFile(net.net, path, 'svm.p')
@@ -164,15 +169,13 @@ def main():
 
   start = clock()
   print("\nTesting 50% match vs 50% random:")
-  net.test(10000)
+  net.test(40000, 1000)
   print("Time: %ds" %(clock()-start))
 
   start = clock()
   print("\nTesting 100% random:")
-  net.test(10000, match=False)
+  net.test(40000, 1000, match=False)
   print("Time: %ds" %(clock()-start))
-
-  #plt.show()
 
   print("")
 
