@@ -28,6 +28,7 @@ class PostTable():
       if id not in id_table:
         line = {
           'id': id,
+          'title': "",
           'users': [],
           'tags': [], 
           'neg_score': None
@@ -40,6 +41,7 @@ class PostTable():
         line = id_table[id]
 
       if p_type == "1":
+        line['title'] = row.get('Title')
         line['users'].extend(users)
         line['tags'] = tags_re.findall(row.get('Tags'))
         line['neg_score'] = (int( row.get('Score') ) < 0)
@@ -50,7 +52,7 @@ class PostTable():
 
     self.table = table
 
-  csvheader = [ 'id', 'users', 'tags', 'neg_score' ]
+  csvheader = [ 'id', 'title', 'users', 'tags', 'neg_score' ]
   def saveTable(self, addr):
     with open(addr, 'w') as file:
       w = DictWriter(file, self.csvheader, delimiter='\t')
