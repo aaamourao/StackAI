@@ -1,6 +1,7 @@
 from collections import Counter
 
 class Tags():
+  tag_list = []
   count = None
   table = None
   ndim = 0
@@ -20,6 +21,7 @@ class Tags():
       del count[tag]
 
     self.count = count
+    self.tags_list = list(count.keys())
 
     self.dropUncommon(min_count)
 
@@ -39,13 +41,15 @@ class Tags():
     })
 
     self.count = count
+    self.tags_list = list(count.keys())
     self.ndim = len(self.count)
 
   def getTags(self):
-    return self.count.keys()
+    return self.tag_list
 
   def filterSelf(self):
     self.table, self.count = self.filterTable()
+    self.tag_list = list(self.count.keys())
     self.ndim = len(self.count)
 
   def filterTable(self, table=None):
@@ -74,7 +78,7 @@ class Tags():
 
   def saveTags(self, addr, save_counts=True):
     with open(addr, 'w') as file:
-      file.write('\t'.join( self.count.keys() ))
+      file.write('\t'.join( self.tag_list ))
 
       if save_counts:
         file.write('\n' + '\t'.join( self.count.values() ))
@@ -90,6 +94,7 @@ class Tags():
         count = Counter(tags)
 
     self.count = count
+    self.tag_list = tags
     self.ndim = len(self.count)
 
   # Return a vector with sum == 1 indicating the tag distribution of a user
@@ -98,12 +103,12 @@ class Tags():
     total = len(tags_list)
     if total == 0:
       return [0] * len(self.count)
-    return [ tags[k]/total for k in self.count ]
+    return [ tags[k]/total for k in self.tag_list ]
 
   # Return a binary list X where Xi indicates the presence
   # or abscence of the tag i on tags_list
   def makeBinaryVector(self, tags_list):
-    return [ int(k in tags_list) for k in self.count ]
+    return [ int(k in tags_list) for k in self.tag_list ]
 
 
 
