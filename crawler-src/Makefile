@@ -1,4 +1,9 @@
 
 
-crawl:
-	scrapy runspider crawler.py
+user:
+	scrapy runspider crawlUser.py
+
+posts:
+	scrapy runspider crawlPost.py
+
+
