@@ -4,6 +4,7 @@
 
 **StackAI** project intends to use machine learning approaches to find out patterns and make predictions on [StackExchange dumped data](https://archive.org/details/stackexchange). So far, the target outputs are:
 
+* Rank questions by likelyhood of user answering it
 * Predict how many up/down votes a question is going to get after a given time interval
 * Predict when a question is going to be answered
 * Predict if a post is going to be blocked or removed
